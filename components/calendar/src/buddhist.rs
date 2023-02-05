@@ -58,6 +58,7 @@ const BUDDHIST_ERA_OFFSET: i32 = 543;
 /// This calendar supports one era, `"be"`, with 1 B.E. being 543 BCE
 
 #[allow(clippy::exhaustive_structs)] // this type is stable
+#[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
 pub struct Buddhist;
 
 impl Calendar for Buddhist {

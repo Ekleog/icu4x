@@ -50,6 +50,7 @@ use tinystr::tinystr;
 ///
 /// This calendar has a single era: `"saka"`, with Saka 0 being 78 CE. Dates before this era use negative years.
 #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
+#[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
 #[allow(clippy::exhaustive_structs)] // this type is stable
 pub struct Indian;
 

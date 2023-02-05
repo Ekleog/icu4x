@@ -123,6 +123,7 @@ pub mod coptic;
 mod duration;
 mod error;
 pub mod ethiopian;
+mod fuzz;
 pub mod gregorian;
 mod helpers;
 pub mod indian;

@@ -101,6 +101,7 @@ impl<'a, C> Deref for Ref<'a, C> {
 /// assert_eq!(date_iso.month().ordinal, 1);
 /// assert_eq!(date_iso.day_of_month().0, 2);
 /// ```
+#[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
 pub struct Date<A: AsCalendar> {
     pub(crate) inner: <A::Calendar as Calendar>::DateInner,
     pub(crate) calendar: A,

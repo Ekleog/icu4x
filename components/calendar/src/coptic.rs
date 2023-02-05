@@ -54,6 +54,7 @@ use tinystr::tinystr;
 /// This calendar supports two era codes: `"bd"`, and `"ad"`, corresponding to the Before Diocletian and After Diocletian/Anno Martyrum
 /// eras. 1 A.M. is equivalent to 284 C.E.
 #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
+#[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
 #[allow(clippy::exhaustive_structs)] // this type is stable
 pub struct Coptic;
 

@@ -71,15 +71,33 @@ use core::fmt;
 /// let any_japanese_datetime = japanese_datetime.to_any();
 /// ```
 #[non_exhaustive]
+#[derive(Clone, Debug)]
+#[cfg_attr(all(test, feature = "serde"), derive(bolero::generator::TypeGenerator))]
 pub enum AnyCalendar {
     /// A [`Gregorian`] calendar
     Gregorian(Gregorian),
     /// A [`Buddhist`] calendar
     Buddhist(Buddhist),
     /// A [`Japanese`] calendar
-    Japanese(Japanese),
+    Japanese(
+        #[cfg_attr(
+            all(test, feature = "serde"),
+            generator(bolero::generator::constant(Japanese::try_new_unstable(
+                &icu_testdata::buffer().as_deserializing()
+            ).unwrap()))
+        )]
+        Japanese,
+    ),
     /// A [`JapaneseExtended`] calendar
-    JapaneseExtended(JapaneseExtended),
+    JapaneseExtended(
+        #[cfg_attr(
+            all(test, feature = "serde"),
+            generator(bolero::generator::constant(JapaneseExtended::try_new_unstable(
+                &icu_testdata::buffer().as_deserializing()
+            ).unwrap()))
+        )]
+        JapaneseExtended,
+    ),
     /// An [`Ethiopian`] calendar
     Ethiopian(Ethiopian),
     /// An [`Indian`] calendar

@@ -49,6 +49,7 @@ use tinystr::tinystr;
 ///
 /// This calendar supports two era codes: `"bce"`, and `"ce"`, corresponding to the BCE and CE eras
 #[derive(Copy, Clone, Debug, Default)]
+#[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
 #[allow(clippy::exhaustive_structs)] // this type is stable
 pub struct Gregorian;
 

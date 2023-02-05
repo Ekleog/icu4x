@@ -75,6 +75,7 @@ pub enum EthiopianEraStyle {
 /// `"mundi`, where 1 Anno Mundi is 5493 BCE. Dates before that use negative year numbers.
 // The bool specifies whether dates should be in the Amete Alem era scheme
 #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
+#[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
 pub struct Ethiopian(pub(crate) bool);
 
 /// The inner date type used for representing [`Date`]s of [`Ethiopian`]. See [`Date`] and [`Ethiopian`] for more details.

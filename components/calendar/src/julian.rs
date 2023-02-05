@@ -55,6 +55,7 @@ const JULIAN_EPOCH: i32 = -1;
 ///
 /// This calendar supports two era codes: `"bc"`, and `"ad"`, corresponding to the BC and AD eras
 #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
+#[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
 #[allow(clippy::exhaustive_structs)] // this type is stable
 pub struct Julian;
 

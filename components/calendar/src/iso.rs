@@ -53,6 +53,7 @@ const EPOCH: i32 = 1;
 /// This calendar supports one era, `"default"`
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
 #[allow(clippy::exhaustive_structs)] // this type is stable
 pub struct Iso;
 
