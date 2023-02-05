@@ -468,22 +468,9 @@ pub mod any_calendar {
 
         fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo { loop {} }
 
-        fn debug_name(&self) -> &'static str {
-            match *self {
-                Self::Gregorian(_) => "AnyCalendar (Gregorian)",
-                Self::Buddhist(_) => "AnyCalendar (Buddhist)",
-                Self::Japanese(_) => "AnyCalendar (Japanese)",
-                Self::JapaneseExtended(_) => "AnyCalendar (Japanese, Historical Era Data)",
-                Self::Ethiopian(_) => "AnyCalendar (Ethiopian)",
-                Self::Indian(_) => "AnyCalendar (Indian)",
-                Self::Coptic(_) => "AnyCalendar (Coptic)",
-                Self::Iso(_) => "AnyCalendar (Iso)",
-            }
-        }
+        fn debug_name(&self) -> &'static str { loop {} }
 
-        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> {
-            Some(self.kind())
-        }
+        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> { loop {} }
     }
 
     impl AnyCalendar {
@@ -493,27 +480,7 @@ pub mod any_calendar {
         ) -> Result<Self, CalendarError>
         where
             P: AnyProvider + ?Sized,
-        {
-            Ok(match kind {
-                AnyCalendarKind::Gregorian => AnyCalendar::Gregorian(Gregorian),
-                AnyCalendarKind::Buddhist => AnyCalendar::Buddhist(Buddhist),
-                AnyCalendarKind::Japanese => {
-                    AnyCalendar::Japanese(Japanese::try_new_with_any_provider(provider)?)
-                }
-                AnyCalendarKind::JapaneseExtended => AnyCalendar::JapaneseExtended(
-                    JapaneseExtended::try_new_with_any_provider(provider)?,
-                ),
-                AnyCalendarKind::Indian => AnyCalendar::Indian(Indian),
-                AnyCalendarKind::Coptic => AnyCalendar::Coptic(Coptic),
-                AnyCalendarKind::Iso => AnyCalendar::Iso(Iso),
-                AnyCalendarKind::Ethiopian => AnyCalendar::Ethiopian(
-                    Ethiopian::new_with_era_style(EthiopianEraStyle::AmeteMihret),
-                ),
-                AnyCalendarKind::EthiopianAmeteAlem => AnyCalendar::Ethiopian(
-                    Ethiopian::new_with_era_style(EthiopianEraStyle::AmeteAlem),
-                ),
-            })
-        }
+            { loop {} }
 
         #[cfg(feature = "serde")]
         pub fn try_new_with_buffer_provider<P>(
@@ -522,27 +489,7 @@ pub mod any_calendar {
         ) -> Result<Self, CalendarError>
         where
             P: BufferProvider + ?Sized,
-        {
-            Ok(match kind {
-                AnyCalendarKind::Gregorian => AnyCalendar::Gregorian(Gregorian),
-                AnyCalendarKind::Buddhist => AnyCalendar::Buddhist(Buddhist),
-                AnyCalendarKind::Japanese => {
-                    AnyCalendar::Japanese(Japanese::try_new_with_buffer_provider(provider)?)
-                }
-                AnyCalendarKind::JapaneseExtended => AnyCalendar::JapaneseExtended(
-                    JapaneseExtended::try_new_with_buffer_provider(provider)?,
-                ),
-                AnyCalendarKind::Indian => AnyCalendar::Indian(Indian),
-                AnyCalendarKind::Coptic => AnyCalendar::Coptic(Coptic),
-                AnyCalendarKind::Iso => AnyCalendar::Iso(Iso),
-                AnyCalendarKind::Ethiopian => AnyCalendar::Ethiopian(
-                    Ethiopian::new_with_era_style(EthiopianEraStyle::AmeteMihret),
-                ),
-                AnyCalendarKind::EthiopianAmeteAlem => AnyCalendar::Ethiopian(
-                    Ethiopian::new_with_era_style(EthiopianEraStyle::AmeteAlem),
-                ),
-            })
-        }
+            { loop {} }
 
         pub fn try_new_unstable<P>(
             provider: &P,
@@ -552,27 +499,7 @@ pub mod any_calendar {
             P: DataProvider<crate::provider::JapaneseErasV1Marker>
                 + DataProvider<crate::provider::JapaneseExtendedErasV1Marker>
                 + ?Sized,
-        {
-            Ok(match kind {
-                AnyCalendarKind::Gregorian => AnyCalendar::Gregorian(Gregorian),
-                AnyCalendarKind::Buddhist => AnyCalendar::Buddhist(Buddhist),
-                AnyCalendarKind::Japanese => {
-                    AnyCalendar::Japanese(Japanese::try_new_unstable(provider)?)
-                }
-                AnyCalendarKind::JapaneseExtended => {
-                    AnyCalendar::JapaneseExtended(JapaneseExtended::try_new_unstable(provider)?)
-                }
-                AnyCalendarKind::Indian => AnyCalendar::Indian(Indian),
-                AnyCalendarKind::Coptic => AnyCalendar::Coptic(Coptic),
-                AnyCalendarKind::Iso => AnyCalendar::Iso(Iso),
-                AnyCalendarKind::Ethiopian => AnyCalendar::Ethiopian(
-                    Ethiopian::new_with_era_style(EthiopianEraStyle::AmeteMihret),
-                ),
-                AnyCalendarKind::EthiopianAmeteAlem => AnyCalendar::Ethiopian(
-                    Ethiopian::new_with_era_style(EthiopianEraStyle::AmeteAlem),
-                ),
-            })
-        }
+                { loop {} }
 
         icu_provider::gen_any_buffer_constructors!(
             locale: include,
@@ -593,78 +520,25 @@ pub mod any_calendar {
             P: DataProvider<crate::provider::JapaneseErasV1Marker>
                 + DataProvider<crate::provider::JapaneseExtendedErasV1Marker>
                 + ?Sized,
-        {
-            let kind = AnyCalendarKind::from_data_locale_with_fallback(locale);
-            Self::try_new_unstable(provider, kind)
-        }
+                { loop {} }
 
-        fn calendar_name(&self) -> &'static str {
-            match *self {
-                Self::Gregorian(_) => "Gregorian",
-                Self::Buddhist(_) => "Buddhist",
-                Self::Japanese(_) => "Japanese",
-                Self::JapaneseExtended(_) => "Japanese (Historical era data)",
-                Self::Ethiopian(_) => "Ethiopian",
-                Self::Indian(_) => "Indian",
-                Self::Coptic(_) => "Coptic",
-                Self::Iso(_) => "Iso",
-            }
-        }
+        fn calendar_name(&self) -> &'static str { loop {} }
 
-        pub fn kind(&self) -> AnyCalendarKind {
-            match *self {
-                Self::Gregorian(_) => AnyCalendarKind::Gregorian,
-                Self::Buddhist(_) => AnyCalendarKind::Buddhist,
-                Self::Japanese(_) => AnyCalendarKind::Japanese,
-                Self::JapaneseExtended(_) => AnyCalendarKind::JapaneseExtended,
-                #[allow(clippy::expect_used)] // Invariant known at compile time
-                Self::Ethiopian(ref e) => e
-                    .any_calendar_kind()
-                    .expect("Ethiopian calendar known to have an AnyCalendarKind"),
-                Self::Indian(_) => AnyCalendarKind::Indian,
-                Self::Coptic(_) => AnyCalendarKind::Coptic,
-                Self::Iso(_) => AnyCalendarKind::Iso,
-            }
-        }
+        pub fn kind(&self) -> AnyCalendarKind { loop {} }
 
         pub fn convert_any_date<'a>(
             &'a self,
             date: &Date<impl AsCalendar<Calendar = AnyCalendar>>,
-        ) -> Date<Ref<'a, AnyCalendar>> {
-            if self.kind() != date.calendar.as_calendar().kind() {
-                Date::new_from_iso(date.to_iso(), Ref(self))
-            } else {
-                Date {
-                    inner: date.inner.clone(),
-                    calendar: Ref(self),
-                }
-            }
-        }
+        ) -> Date<Ref<'a, AnyCalendar>> { loop {} }
 
         pub fn convert_any_datetime<'a>(
             &'a self,
             date: &DateTime<impl AsCalendar<Calendar = AnyCalendar>>,
-        ) -> DateTime<Ref<'a, AnyCalendar>> {
-            DateTime {
-                time: date.time,
-                date: self.convert_any_date(&date.date),
-            }
-        }
+        ) -> DateTime<Ref<'a, AnyCalendar>> { loop {} }
     }
 
     impl AnyDateInner {
-        fn calendar_name(&self) -> &'static str {
-            match *self {
-                AnyDateInner::Gregorian(_) => "Gregorian",
-                AnyDateInner::Buddhist(_) => "Buddhist",
-                AnyDateInner::Japanese(_) => "Japanese",
-                AnyDateInner::JapaneseExtended(_) => "Japanese (Historical era data)",
-                AnyDateInner::Ethiopian(_) => "Ethiopian",
-                AnyDateInner::Indian(_) => "Indian",
-                AnyDateInner::Coptic(_) => "Coptic",
-                AnyDateInner::Iso(_) => "Iso",
-            }
-        }
+        fn calendar_name(&self) -> &'static str { loop {} }
     }
 
     #[non_exhaustive]
@@ -682,100 +556,19 @@ pub mod any_calendar {
     }
 
     impl AnyCalendarKind {
-        pub fn get_for_bcp47_string(x: &str) -> Option<Self> {
-            Self::get_for_bcp47_bytes(x.as_bytes())
-        }
-        pub fn get_for_bcp47_bytes(x: &[u8]) -> Option<Self> {
-            Some(match x {
-                b"gregory" => AnyCalendarKind::Gregorian,
-                b"buddhist" => AnyCalendarKind::Buddhist,
-                b"japanese" => AnyCalendarKind::Japanese,
-                b"japanext" => AnyCalendarKind::JapaneseExtended,
-                b"indian" => AnyCalendarKind::Indian,
-                b"coptic" => AnyCalendarKind::Coptic,
-                b"iso" => AnyCalendarKind::Iso,
-                b"ethiopic" => AnyCalendarKind::Ethiopian,
-                b"ethioaa" => AnyCalendarKind::EthiopianAmeteAlem,
-                _ => return None,
-            })
-        }
-        pub fn get_for_bcp47_value(x: &Value) -> Option<Self> {
-            Some(if *x == value!("gregory") {
-                AnyCalendarKind::Gregorian
-            } else if *x == value!("buddhist") {
-                AnyCalendarKind::Buddhist
-            } else if *x == value!("japanese") {
-                AnyCalendarKind::Japanese
-            } else if *x == value!("japanext") {
-                AnyCalendarKind::JapaneseExtended
-            } else if *x == value!("indian") {
-                AnyCalendarKind::Indian
-            } else if *x == value!("coptic") {
-                AnyCalendarKind::Coptic
-            } else if *x == value!("iso") {
-                AnyCalendarKind::Iso
-            } else if *x == value!("ethiopic") {
-                AnyCalendarKind::Ethiopian
-            } else if *x == value!("ethioaa") {
-                AnyCalendarKind::EthiopianAmeteAlem
-            } else {
-                return None;
-            })
-        }
+        pub fn get_for_bcp47_string(x: &str) -> Option<Self> { loop {} }
+        pub fn get_for_bcp47_bytes(x: &[u8]) -> Option<Self> { loop {} }
+        pub fn get_for_bcp47_value(x: &Value) -> Option<Self> { loop {} }
 
-        pub fn as_bcp47_string(self) -> &'static str {
-            match self {
-                AnyCalendarKind::Gregorian => "gregory",
-                AnyCalendarKind::Buddhist => "buddhist",
-                AnyCalendarKind::Japanese => "japanese",
-                AnyCalendarKind::JapaneseExtended => "japanext",
-                AnyCalendarKind::Indian => "indian",
-                AnyCalendarKind::Coptic => "coptic",
-                AnyCalendarKind::Iso => "iso",
-                AnyCalendarKind::Ethiopian => "ethiopic",
-                AnyCalendarKind::EthiopianAmeteAlem => "ethioaa",
-            }
-        }
+        pub fn as_bcp47_string(self) -> &'static str { loop {} }
 
-        pub fn as_bcp47_value(self) -> Value {
-            match self {
-                AnyCalendarKind::Gregorian => value!("gregory"),
-                AnyCalendarKind::Buddhist => value!("buddhist"),
-                AnyCalendarKind::Japanese => value!("japanese"),
-                AnyCalendarKind::JapaneseExtended => value!("japanext"),
-                AnyCalendarKind::Indian => value!("indian"),
-                AnyCalendarKind::Coptic => value!("coptic"),
-                AnyCalendarKind::Iso => value!("iso"),
-                AnyCalendarKind::Ethiopian => value!("ethiopic"),
-                AnyCalendarKind::EthiopianAmeteAlem => value!("ethioaa"),
-            }
-        }
+        pub fn as_bcp47_value(self) -> Value { loop {} }
 
-        pub fn get_for_locale(l: &Locale) -> Option<Self> {
-            l.extensions
-                .unicode
-                .keywords
-                .get(&key!("ca"))
-                .and_then(Self::get_for_bcp47_value)
-        }
+        pub fn get_for_locale(l: &Locale) -> Option<Self> { loop {} }
 
-        fn get_for_data_locale(l: &DataLocale) -> Option<Self> {
-            l.get_unicode_ext(&key!("ca"))
-                .and_then(|v| Self::get_for_bcp47_value(&v))
-        }
+        fn get_for_data_locale(l: &DataLocale) -> Option<Self> { loop {} }
 
-        fn from_data_locale_with_fallback(l: &DataLocale) -> Self {
-            if let Some(kind) = Self::get_for_data_locale(l) {
-                kind
-            } else {
-                let lang = l.language();
-                if lang == language!("th") {
-                    Self::Buddhist
-                } else {
-                    Self::Gregorian
-                }
-            }
-        }
+        fn from_data_locale_with_fallback(l: &DataLocale) -> Self { loop {} }
     }
 
     impl fmt::Display for AnyCalendarKind {
