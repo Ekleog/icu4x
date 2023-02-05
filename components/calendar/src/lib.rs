@@ -299,53 +299,28 @@ mod datetime {
         }
 
         #[inline]
-        pub fn new_from_iso(iso: DateTime<Iso>, calendar: A) -> Self {
-            let date = Date::new_from_iso(iso.date, calendar);
-            DateTime {
-                date,
-                time: iso.time,
-            }
+        pub fn new_from_iso(iso: DateTime<Iso>, calendar: A) -> Self {loop {}
         }
 
         #[inline]
-        pub fn to_iso(&self) -> DateTime<Iso> {
-            DateTime {
-                date: self.date.to_iso(),
-                time: self.time,
-            }
+        pub fn to_iso(&self) -> DateTime<Iso> {loop {}
         }
 
         #[inline]
-        pub fn to_calendar<A2: AsCalendar>(&self, calendar: A2) -> DateTime<A2> {
-            DateTime {
-                date: self.date.to_calendar(calendar),
-                time: self.time,
-            }
+        pub fn to_calendar<A2: AsCalendar>(&self, calendar: A2) -> DateTime<A2> {loop {}
         }
     }
 
     impl<C: IntoAnyCalendar, A: AsCalendar<Calendar = C>> DateTime<A> {
-        pub fn to_any(&self) -> DateTime<AnyCalendar> {
-            DateTime {
-                date: self.date.to_any(),
-                time: self.time,
-            }
+        pub fn to_any(&self) -> DateTime<AnyCalendar> {loop {}
         }
     }
 
     impl<C: Calendar> DateTime<C> {
-        pub fn wrap_calendar_in_rc(self) -> DateTime<Rc<C>> {
-            DateTime {
-                date: self.date.wrap_calendar_in_rc(),
-                time: self.time,
-            }
+        pub fn wrap_calendar_in_rc(self) -> DateTime<Rc<C>> {loop {}
         }
 
-        pub fn wrap_calendar_in_arc(self) -> DateTime<Arc<C>> {
-            DateTime {
-                date: self.date.wrap_calendar_in_arc(),
-                time: self.time,
-            }
+        pub fn wrap_calendar_in_arc(self) -> DateTime<Arc<C>> {loop {}
         }
     }
 
@@ -355,19 +330,14 @@ mod datetime {
         A: AsCalendar<Calendar = C>,
         B: AsCalendar<Calendar = C>,
     {
-        fn eq(&self, other: &DateTime<B>) -> bool {
-            self.date == other.date && self.time == other.time
+        fn eq(&self, other: &DateTime<B>) -> bool {loop {}
         }
     }
 
     impl<A: AsCalendar> Eq for DateTime<A> {}
 
     impl<A: AsCalendar + Clone> Clone for DateTime<A> {
-        fn clone(&self) -> Self {
-            Self {
-                date: self.date.clone(),
-                time: self.time,
-            }
+        fn clone(&self) -> Self {loop {}
         }
     }
 
@@ -447,34 +417,7 @@ pub mod any_calendar {
 
     macro_rules! match_cal_and_date {
         (match ($cal:ident, $date:ident): ($cal_matched:ident, $date_matched:ident) => $e:expr) => {
-            match ($cal, $date) {
-                (
-                    &Self::Gregorian(ref $cal_matched),
-                    &AnyDateInner::Gregorian(ref $date_matched),
-                ) => $e,
-                (&Self::Buddhist(ref $cal_matched), &AnyDateInner::Buddhist(ref $date_matched)) => {
-                    $e
-                }
-                (&Self::Japanese(ref $cal_matched), &AnyDateInner::Japanese(ref $date_matched)) => {
-                    $e
-                }
-                (
-                    &Self::JapaneseExtended(ref $cal_matched),
-                    &AnyDateInner::JapaneseExtended(ref $date_matched),
-                ) => $e,
-                (
-                    &Self::Ethiopian(ref $cal_matched),
-                    &AnyDateInner::Ethiopian(ref $date_matched),
-                ) => $e,
-                (&Self::Indian(ref $cal_matched), &AnyDateInner::Indian(ref $date_matched)) => $e,
-                (&Self::Coptic(ref $cal_matched), &AnyDateInner::Coptic(ref $date_matched)) => $e,
-                (&Self::Iso(ref $cal_matched), &AnyDateInner::Iso(ref $date_matched)) => $e,
-                _ => panic!(
-                    "Found AnyCalendar with mixed calendar type {} and date type {}!",
-                    $cal.calendar_name(),
-                    $date.calendar_name()
-                ),
-            }
+            loop {}
         };
     }
 
