@@ -978,41 +978,10 @@ pub mod coptic {
             hour: u8,
             minute: u8,
             second: u8,
-        ) -> Result<DateTime<Coptic>, CalendarError> {
-            Ok(DateTime {
-                date: Date::try_new_coptic_date(year, month, day)?,
-                time: types::Time::try_new(hour, minute, second, 0)?,
-            })
-        }
+        ) -> Result<DateTime<Coptic>, CalendarError> { loop {} }
     }
 
-    fn year_as_coptic(year: i32) -> types::FormattableYear {
-        if year > 0 {
-            types::FormattableYear {
-                era: types::Era(tinystr!(16, "ad")),
-                number: year,
-                related_iso: None,
-            }
-        } else {
-            types::FormattableYear {
-                era: types::Era(tinystr!(16, "bd")),
-                number: 1 - year,
-                related_iso: None,
-            }
-        }
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-        #[test]
-        fn test_coptic_regression() {
-            let iso_date = Date::try_new_iso_date(-100, 3, 3).unwrap();
-            let coptic = iso_date.to_calendar(Coptic);
-            let recovered_iso = coptic.to_iso();
-            assert_eq!(iso_date, recovered_iso);
-        }
-    }
+    fn year_as_coptic(year: i32) -> types::FormattableYear { loop {} }
 }
 mod duration {
 
@@ -1040,48 +1009,17 @@ mod duration {
     }
 
     impl<C: Calendar + ?Sized> Default for DateDuration<C> {
-        fn default() -> Self {
-            Self {
-                years: 0,
-                months: 0,
-                weeks: 0,
-                days: 0,
-                marker: PhantomData,
-            }
-        }
+        fn default() -> Self { loop {} }
     }
 
     impl<C: Calendar + ?Sized> DateDuration<C> {
-        pub fn new(years: i32, months: i32, weeks: i32, days: i32) -> Self {
-            DateDuration {
-                years,
-                months,
-                weeks,
-                days,
-                marker: PhantomData,
-            }
-        }
+        pub fn new(years: i32, months: i32, weeks: i32, days: i32) -> Self { loop {} }
 
-        pub fn cast_unit<C2: Calendar + ?Sized>(self) -> DateDuration<C2> {
-            DateDuration {
-                years: self.years,
-                months: self.months,
-                days: self.days,
-                weeks: self.weeks,
-                marker: PhantomData,
-            }
-        }
+        pub fn cast_unit<C2: Calendar + ?Sized>(self) -> DateDuration<C2> { loop {} }
     }
 
     impl<C: Calendar> fmt::Debug for DateDuration<C> {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-            f.debug_struct("DateDuration")
-                .field("years", &self.years)
-                .field("months", &self.months)
-                .field("weeks", &self.weeks)
-                .field("days", &self.days)
-                .finish()
-        }
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> { loop {} }
     }
 }
 mod error {
@@ -1126,26 +1064,15 @@ mod error {
     }
 
     impl From<core::num::ParseIntError> for CalendarError {
-        fn from(_: core::num::ParseIntError) -> Self {
-            CalendarError::Parse
-        }
+        fn from(_: core::num::ParseIntError) -> Self { loop {} }
     }
 
     impl From<DataError> for CalendarError {
-        fn from(e: DataError) -> Self {
-            CalendarError::Data(e)
-        }
+        fn from(e: DataError) -> Self { loop {} }
     }
 
     impl CalendarError {
-        pub fn unknown_any_calendar_kind(description: impl Writeable) -> Self {
-            let tiny = description
-                .write_to_string()
-                .get(0..16)
-                .and_then(|x| TinyStr16::from_str(x).ok())
-                .unwrap_or(tinystr!(16, "invalid"));
-            Self::UnknownAnyCalendarKind(tiny)
-        }
+        pub fn unknown_any_calendar_kind(description: impl Writeable) -> Self { loop {} }
     }
 }
 pub mod ethiopian {
@@ -1177,35 +1104,13 @@ pub mod ethiopian {
     pub struct EthiopianDateInner(ArithmeticDate<Ethiopian>);
 
     impl CalendarArithmetic for Ethiopian {
-        fn month_days(year: i32, month: u8) -> u8 {
-            if (1..=12).contains(&month) {
-                30
-            } else if month == 13 {
-                if Self::is_leap_year(year) {
-                    6
-                } else {
-                    5
-                }
-            } else {
-                0
-            }
-        }
+        fn month_days(year: i32, month: u8) -> u8 { loop {} }
 
-        fn months_for_every_year(_: i32) -> u8 {
-            13
-        }
+        fn months_for_every_year(_: i32) -> u8 { loop {} }
 
-        fn is_leap_year(year: i32) -> bool {
-            year % 4 == 3
-        }
+        fn is_leap_year(year: i32) -> bool { loop {} }
 
-        fn days_in_provided_year(year: i32) -> u32 {
-            if Self::is_leap_year(year) {
-                366
-            } else {
-                365
-            }
-        }
+        fn days_in_provided_year(year: i32) -> u32 { loop {} }
     }
 
     impl Calendar for Ethiopian {
@@ -1216,54 +1121,20 @@ pub mod ethiopian {
             year: i32,
             month_code: types::MonthCode,
             day: u8,
-        ) -> Result<Self::DateInner, CalendarError> {
-            let year = if era.0 == tinystr!(16, "incar") {
-                if year <= 0 {
-                    return Err(CalendarError::OutOfRange);
-                }
-                year
-            } else if era.0 == tinystr!(16, "pre-incar") {
-                if year <= 0 {
-                    return Err(CalendarError::OutOfRange);
-                }
-                1 - year
-            } else if era.0 == tinystr!(16, "mundi") {
-                year - AMETE_ALEM_OFFSET
-            } else {
-                return Err(CalendarError::UnknownEra(era.0, self.debug_name()));
-            };
+        ) -> Result<Self::DateInner, CalendarError> { loop {} }
+        fn date_from_iso(&self, iso: Date<Iso>) -> EthiopianDateInner { loop {} }
 
-            ArithmeticDate::new_from_solar(self, year, month_code, day).map(EthiopianDateInner)
-        }
-        fn date_from_iso(&self, iso: Date<Iso>) -> EthiopianDateInner {
-            let fixed_iso = Iso::fixed_from_iso(*iso.inner());
-            Self::ethiopian_from_fixed(fixed_iso)
-        }
+        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> { loop {} }
 
-        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> {
-            let fixed_ethiopian = Ethiopian::fixed_from_ethiopian(date.0);
-            Iso::iso_from_fixed(fixed_ethiopian)
-        }
+        fn months_in_year(&self, date: &Self::DateInner) -> u8 { loop {} }
 
-        fn months_in_year(&self, date: &Self::DateInner) -> u8 {
-            date.0.months_in_year()
-        }
+        fn days_in_year(&self, date: &Self::DateInner) -> u32 { loop {} }
 
-        fn days_in_year(&self, date: &Self::DateInner) -> u32 {
-            date.0.days_in_year()
-        }
+        fn days_in_month(&self, date: &Self::DateInner) -> u8 { loop {} }
 
-        fn days_in_month(&self, date: &Self::DateInner) -> u8 {
-            date.0.days_in_month()
-        }
+        fn day_of_week(&self, date: &Self::DateInner) -> types::IsoWeekday { loop {} }
 
-        fn day_of_week(&self, date: &Self::DateInner) -> types::IsoWeekday {
-            Iso.day_of_week(self.date_to_iso(date).inner())
-        }
-
-        fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) {
-            date.0.offset_date(offset);
-        }
+        fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) { loop {} }
 
         #[allow(clippy::field_reassign_with_default)]
         fn until(
@@ -1273,13 +1144,9 @@ pub mod ethiopian {
             _calendar2: &Self,
             _largest_unit: DateDurationUnit,
             _smallest_unit: DateDurationUnit,
-        ) -> DateDuration<Self> {
-            date1.0.until(date2.0, _largest_unit, _smallest_unit)
-        }
+        ) -> DateDuration<Self> { loop {} }
 
-        fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
-            Self::year_as_ethiopian(date.0.year, self.0)
-        }
+        fn year(&self, date: &Self::DateInner) -> types::FormattableYear { loop {} }
 
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             date.0.solar_month()
