@@ -295,9 +295,7 @@ mod datetime {
             day: u8,
             time: Time,
             calendar: A,
-        ) -> Result<Self, CalendarError> {
-            let date = Date::try_new_from_codes(era, year, month_code, day, calendar)?;
-            Ok(DateTime { date, time })
+        ) -> Result<Self, CalendarError> {loop {}
         }
 
         #[inline]
