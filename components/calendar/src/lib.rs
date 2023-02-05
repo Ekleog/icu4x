@@ -430,98 +430,25 @@ pub mod any_calendar {
             month_code: types::MonthCode,
             day: u8,
         ) -> Result<Self::DateInner, CalendarError> {
-            let ret = match *self {
-                Self::Gregorian(ref c) => {
-                    AnyDateInner::Gregorian(c.date_from_codes(era, year, month_code, day)?)
-                }
-                Self::Buddhist(ref c) => {
-                    AnyDateInner::Buddhist(c.date_from_codes(era, year, month_code, day)?)
-                }
-                Self::Japanese(ref c) => {
-                    AnyDateInner::Japanese(c.date_from_codes(era, year, month_code, day)?)
-                }
-                Self::JapaneseExtended(ref c) => {
-                    AnyDateInner::JapaneseExtended(c.date_from_codes(era, year, month_code, day)?)
-                }
-                Self::Ethiopian(ref c) => {
-                    AnyDateInner::Ethiopian(c.date_from_codes(era, year, month_code, day)?)
-                }
-                Self::Indian(ref c) => {
-                    AnyDateInner::Indian(c.date_from_codes(era, year, month_code, day)?)
-                }
-                Self::Coptic(ref c) => {
-                    AnyDateInner::Coptic(c.date_from_codes(era, year, month_code, day)?)
-                }
-                Self::Iso(ref c) => {
-                    AnyDateInner::Iso(c.date_from_codes(era, year, month_code, day)?)
-                }
-            };
-            Ok(ret)
+            loop {}
         }
-        fn date_from_iso(&self, iso: Date<Iso>) -> AnyDateInner {
-            match *self {
-                Self::Gregorian(ref c) => AnyDateInner::Gregorian(c.date_from_iso(iso)),
-                Self::Buddhist(ref c) => AnyDateInner::Buddhist(c.date_from_iso(iso)),
-                Self::Japanese(ref c) => AnyDateInner::Japanese(c.date_from_iso(iso)),
-                Self::JapaneseExtended(ref c) => {
-                    AnyDateInner::JapaneseExtended(c.date_from_iso(iso))
-                }
-                Self::Ethiopian(ref c) => AnyDateInner::Ethiopian(c.date_from_iso(iso)),
-                Self::Indian(ref c) => AnyDateInner::Indian(c.date_from_iso(iso)),
-                Self::Coptic(ref c) => AnyDateInner::Coptic(c.date_from_iso(iso)),
-                Self::Iso(ref c) => AnyDateInner::Iso(c.date_from_iso(iso)),
-            }
+        fn date_from_iso(&self, iso: Date<Iso>) -> AnyDateInner {loop {}
         }
 
-        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> {
-            match_cal_and_date!(match (self, date): (c, d) => c.date_to_iso(d))
+        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> {loop {}
         }
 
-        fn months_in_year(&self, date: &Self::DateInner) -> u8 {
-            match_cal_and_date!(match (self, date): (c, d) => c.months_in_year(d))
+        fn months_in_year(&self, date: &Self::DateInner) -> u8 {loop {}
         }
 
-        fn days_in_year(&self, date: &Self::DateInner) -> u32 {
-            match_cal_and_date!(match (self, date): (c, d) => c.days_in_year(d))
+        fn days_in_year(&self, date: &Self::DateInner) -> u32 {loop {}
         }
 
-        fn days_in_month(&self, date: &Self::DateInner) -> u8 {
-            match_cal_and_date!(match (self, date): (c, d) => c.days_in_month(d))
+        fn days_in_month(&self, date: &Self::DateInner) -> u8 {loop {}
         }
 
         fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) {
-            match (self, date) {
-                (Self::Gregorian(c), &mut AnyDateInner::Gregorian(ref mut d)) => {
-                    c.offset_date(d, offset.cast_unit())
-                }
-                (Self::Buddhist(c), &mut AnyDateInner::Buddhist(ref mut d)) => {
-                    c.offset_date(d, offset.cast_unit())
-                }
-                (Self::Japanese(c), &mut AnyDateInner::Japanese(ref mut d)) => {
-                    c.offset_date(d, offset.cast_unit())
-                }
-                (Self::JapaneseExtended(c), &mut AnyDateInner::JapaneseExtended(ref mut d)) => {
-                    c.offset_date(d, offset.cast_unit())
-                }
-                (Self::Ethiopian(c), &mut AnyDateInner::Ethiopian(ref mut d)) => {
-                    c.offset_date(d, offset.cast_unit())
-                }
-                (Self::Indian(c), &mut AnyDateInner::Indian(ref mut d)) => {
-                    c.offset_date(d, offset.cast_unit())
-                }
-                (Self::Coptic(c), &mut AnyDateInner::Coptic(ref mut d)) => {
-                    c.offset_date(d, offset.cast_unit())
-                }
-                (Self::Iso(c), &mut AnyDateInner::Iso(ref mut d)) => {
-                    c.offset_date(d, offset.cast_unit())
-                }
-                #[allow(clippy::panic)]
-                (_, d) => panic!(
-                    "Found AnyCalendar with mixed calendar type {} and date type {}!",
-                    self.calendar_name(),
-                    d.calendar_name()
-                ),
-            }
+            loop {}
         }
 
         fn until(
@@ -531,96 +458,15 @@ pub mod any_calendar {
             calendar2: &Self,
             largest_unit: DateDurationUnit,
             smallest_unit: DateDurationUnit,
-        ) -> DateDuration<Self> {
-            match (self, calendar2, date1, date2) {
-                (
-                    Self::Gregorian(c1),
-                    Self::Gregorian(c2),
-                    AnyDateInner::Gregorian(d1),
-                    AnyDateInner::Gregorian(d2),
-                ) => c1
-                    .until(d1, d2, c2, largest_unit, smallest_unit)
-                    .cast_unit(),
-                (
-                    Self::Buddhist(c1),
-                    Self::Buddhist(c2),
-                    AnyDateInner::Buddhist(d1),
-                    AnyDateInner::Buddhist(d2),
-                ) => c1
-                    .until(d1, d2, c2, largest_unit, smallest_unit)
-                    .cast_unit(),
-                (
-                    Self::Japanese(c1),
-                    Self::Japanese(c2),
-                    AnyDateInner::Japanese(d1),
-                    AnyDateInner::Japanese(d2),
-                ) => c1
-                    .until(d1, d2, c2, largest_unit, smallest_unit)
-                    .cast_unit(),
-                (
-                    Self::JapaneseExtended(c1),
-                    Self::JapaneseExtended(c2),
-                    AnyDateInner::JapaneseExtended(d1),
-                    AnyDateInner::JapaneseExtended(d2),
-                ) => c1
-                    .until(d1, d2, c2, largest_unit, smallest_unit)
-                    .cast_unit(),
-                (
-                    Self::Ethiopian(c1),
-                    Self::Ethiopian(c2),
-                    AnyDateInner::Ethiopian(d1),
-                    AnyDateInner::Ethiopian(d2),
-                ) => c1
-                    .until(d1, d2, c2, largest_unit, smallest_unit)
-                    .cast_unit(),
-                (
-                    Self::Indian(c1),
-                    Self::Indian(c2),
-                    AnyDateInner::Indian(d1),
-                    AnyDateInner::Indian(d2),
-                ) => c1
-                    .until(d1, d2, c2, largest_unit, smallest_unit)
-                    .cast_unit(),
-                (
-                    Self::Coptic(c1),
-                    Self::Coptic(c2),
-                    AnyDateInner::Coptic(d1),
-                    AnyDateInner::Coptic(d2),
-                ) => c1
-                    .until(d1, d2, c2, largest_unit, smallest_unit)
-                    .cast_unit(),
-                (Self::Iso(c1), Self::Iso(c2), AnyDateInner::Iso(d1), AnyDateInner::Iso(d2)) => c1
-                    .until(d1, d2, c2, largest_unit, smallest_unit)
-                    .cast_unit(),
-                _ => {
-                    let iso = calendar2.date_to_iso(date2);
+        ) -> DateDuration<Self> { loop {} }
 
-                    match_cal_and_date!(match (self, date1):
-                        (c1, d1) => {
-                            let d2 = c1.date_from_iso(iso);
-                            let until = c1.until(d1, &d2, c1, largest_unit, smallest_unit);
-                            until.cast_unit::<AnyCalendar>()
-                        }
-                    )
-                }
-            }
-        }
+        fn year(&self, date: &Self::DateInner) -> types::FormattableYear { loop {} }
 
-        fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
-            match_cal_and_date!(match (self, date): (c, d) => c.year(d))
-        }
+        fn month(&self, date: &Self::DateInner) -> types::FormattableMonth { loop {} }
 
-        fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
-            match_cal_and_date!(match (self, date): (c, d) => c.month(d))
-        }
+        fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth { loop {} }
 
-        fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
-            match_cal_and_date!(match (self, date): (c, d) => c.day_of_month(d))
-        }
-
-        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
-            match_cal_and_date!(match (self, date): (c, d) => c.day_of_year_info(d))
-        }
+        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo { loop {} }
 
         fn debug_name(&self) -> &'static str {
             match *self {
