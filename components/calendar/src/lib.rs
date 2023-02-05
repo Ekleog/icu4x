@@ -328,18 +328,14 @@ pub mod any_calendar {
         Japanese(
             #[cfg_attr(
             all(test, feature = "serde"),
-            generator(bolero::generator::constant(Japanese::try_new_unstable(
-                &icu_testdata::buffer().as_deserializing()
-            ).unwrap()))
+            generator(bolero::generator::constant({ loop {} }))
         )]
             Japanese,
         ),
         JapaneseExtended(
             #[cfg_attr(
             all(test, feature = "serde"),
-            generator(bolero::generator::constant(JapaneseExtended::try_new_unstable(
-                &icu_testdata::buffer().as_deserializing()
-            ).unwrap()))
+            generator(bolero::generator::constant({ loop {} }))
         )]
             JapaneseExtended,
         ),
