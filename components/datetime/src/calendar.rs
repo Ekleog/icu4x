@@ -6,7 +6,7 @@ use crate::provider::calendar::*;
 use icu_calendar::any_calendar::AnyCalendarKind;
 use icu_calendar::{
     buddhist::Buddhist, coptic::Coptic, ethiopian::Ethiopian, indian::Indian, japanese::Japanese,
-    japanese::JapaneseExtended, Gregorian,
+    japanese::JapaneseExtended, 
 };
 use icu_locid::extensions::unicode::Value;
 use icu_locid::extensions_unicode_value as value;
@@ -34,12 +34,6 @@ pub trait CldrCalendar {
     fn is_identifier_allowed_for_calendar(value: &Value) -> bool {
         *value == Self::DEFAULT_BCP_47_IDENTIFIER
     }
-}
-
-impl CldrCalendar for Gregorian {
-    const DEFAULT_BCP_47_IDENTIFIER: Value = value!("gregory");
-    type DateSymbolsV1Marker = GregorianDateSymbolsV1Marker;
-    type DateLengthsV1Marker = GregorianDateLengthsV1Marker;
 }
 
 impl CldrCalendar for Buddhist {
@@ -129,61 +123,7 @@ where
         + DataProvider<IndianDateLengthsV1Marker>
         + DataProvider<EthiopianDateLengthsV1Marker>
         + ?Sized,
-{
-    let req = DataRequest {
-        locale,
-        metadata: Default::default(),
-    };
-    let payload = match kind {
-        AnyCalendarKind::Gregorian => {
-            DataProvider::<<Gregorian as CldrCalendar>::DateLengthsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::Buddhist => {
-            DataProvider::<<Buddhist as CldrCalendar>::DateLengthsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::Japanese => {
-            DataProvider::<<Japanese as CldrCalendar>::DateLengthsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::JapaneseExtended => DataProvider::<
-            <JapaneseExtended as CldrCalendar>::DateLengthsV1Marker,
-        >::load(provider, req)?
-        .take_payload()?
-        .cast(),
-        AnyCalendarKind::Indian => {
-            DataProvider::<<Indian as CldrCalendar>::DateLengthsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::Coptic => {
-            DataProvider::<<Coptic as CldrCalendar>::DateLengthsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::Ethiopian => {
-            DataProvider::<<Ethiopian as CldrCalendar>::DateLengthsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::EthiopianAmeteAlem => {
-            DataProvider::<<Ethiopian as CldrCalendar>::DateLengthsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        _ => {
-            return Err(
-                DataError::custom("Don't know how to load data for specified calendar")
-                    .with_debug_context(&kind),
-            )
-        }
-    };
-    Ok(payload)
-}
+        { loop {} }
 
 pub(crate) fn load_symbols_for_any_calendar_kind<P>(
     provider: &P,
@@ -199,58 +139,4 @@ where
         + DataProvider<IndianDateSymbolsV1Marker>
         + DataProvider<EthiopianDateSymbolsV1Marker>
         + ?Sized,
-{
-    let req = DataRequest {
-        locale,
-        metadata: Default::default(),
-    };
-    let payload = match kind {
-        AnyCalendarKind::Gregorian => {
-            DataProvider::<<Gregorian as CldrCalendar>::DateSymbolsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::Buddhist => {
-            DataProvider::<<Buddhist as CldrCalendar>::DateSymbolsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::Japanese => {
-            DataProvider::<<Japanese as CldrCalendar>::DateSymbolsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::JapaneseExtended => DataProvider::<
-            <JapaneseExtended as CldrCalendar>::DateSymbolsV1Marker,
-        >::load(provider, req)?
-        .take_payload()?
-        .cast(),
-        AnyCalendarKind::Indian => {
-            DataProvider::<<Indian as CldrCalendar>::DateSymbolsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::Coptic => {
-            DataProvider::<<Coptic as CldrCalendar>::DateSymbolsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::Ethiopian => {
-            DataProvider::<<Ethiopian as CldrCalendar>::DateSymbolsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        AnyCalendarKind::EthiopianAmeteAlem => {
-            DataProvider::<<Ethiopian as CldrCalendar>::DateSymbolsV1Marker>::load(provider, req)?
-                .take_payload()?
-                .cast()
-        }
-        _ => {
-            return Err(
-                DataError::custom("Don't know how to load data for specified calendar")
-                    .with_debug_context(&kind),
-            )
-        }
-    };
-    Ok(payload)
-}
+        { loop {} }

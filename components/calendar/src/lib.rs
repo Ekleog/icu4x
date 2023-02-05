@@ -355,7 +355,6 @@ pub mod any_calendar {
     use crate::buddhist::Buddhist;
     use crate::coptic::Coptic;
     use crate::ethiopian::{Ethiopian, EthiopianEraStyle};
-    use crate::gregorian::Gregorian;
     use crate::indian::Indian;
     use crate::iso::Iso;
     use crate::japanese::{Japanese, JapaneseExtended};
@@ -376,7 +375,6 @@ pub mod any_calendar {
     #[derive(Clone, Debug)]
     #[cfg_attr(all(test, feature = "serde"), derive(bolero::generator::TypeGenerator))]
     pub enum AnyCalendar {
-        Gregorian(Gregorian),
         Buddhist(Buddhist),
         Japanese(
             #[cfg_attr(
@@ -405,7 +403,6 @@ pub mod any_calendar {
     #[derive(Clone, PartialEq, Eq, Debug)]
     #[non_exhaustive]
     pub enum AnyDateInner {
-        Gregorian(<Gregorian as Calendar>::DateInner),
         Buddhist(<Buddhist as Calendar>::DateInner),
         Japanese(<Japanese as Calendar>::DateInner),
         JapaneseExtended(<JapaneseExtended as Calendar>::DateInner),
@@ -544,7 +541,6 @@ pub mod any_calendar {
     #[non_exhaustive]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
     pub enum AnyCalendarKind {
-        Gregorian,
         Buddhist,
         Japanese,
         JapaneseExtended,
@@ -588,12 +584,6 @@ pub mod any_calendar {
 
         fn to_any_cloned(&self) -> AnyCalendar;
         fn date_to_any(&self, d: &Self::DateInner) -> AnyDateInner;
-    }
-
-    impl IntoAnyCalendar for Gregorian {
-        fn to_any(self) -> AnyCalendar { loop {} }
-        fn to_any_cloned(&self) -> AnyCalendar { loop {} }
-        fn date_to_any(&self, d: &Self::DateInner) -> AnyDateInner { loop {} }
     }
 
     impl IntoAnyCalendar for Buddhist {
@@ -1234,163 +1224,6 @@ mod fuzz {
                 let back = converted.to_calendar(from);
                 assert_eq!(time, back);
             })
-    }
-}
-pub mod gregorian {
-
-
-    use crate::any_calendar::AnyCalendarKind;
-    use crate::calendar_arithmetic::ArithmeticDate;
-    use crate::iso::{Iso, IsoDateInner};
-    use crate::{types, Calendar, CalendarError, Date, DateDuration, DateDurationUnit, DateTime};
-    use tinystr::tinystr;
-
-    #[derive(Copy, Clone, Debug, Default)]
-    #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
-    pub struct Gregorian;
-
-    #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
-    pub struct GregorianDateInner(IsoDateInner);
-
-    impl Calendar for Gregorian {
-        type DateInner = GregorianDateInner;
-        fn date_from_codes(
-            &self,
-            era: types::Era,
-            year: i32,
-            month_code: types::MonthCode,
-            day: u8,
-        ) -> Result<Self::DateInner, CalendarError> {
-            let year = if era.0 == tinystr!(16, "ce") {
-                if year <= 0 {
-                    return Err(CalendarError::OutOfRange);
-                }
-                year
-            } else if era.0 == tinystr!(16, "bce") {
-                if year <= 0 {
-                    return Err(CalendarError::OutOfRange);
-                }
-                1 - year
-            } else {
-                return Err(CalendarError::UnknownEra(era.0, self.debug_name()));
-            };
-
-            ArithmeticDate::new_from_solar(self, year, month_code, day)
-                .map(IsoDateInner)
-                .map(GregorianDateInner)
-        }
-
-        fn date_from_iso(&self, iso: Date<Iso>) -> GregorianDateInner {
-            GregorianDateInner(*iso.inner())
-        }
-
-        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> {
-            Date::from_raw(date.0, Iso)
-        }
-
-        fn months_in_year(&self, date: &Self::DateInner) -> u8 {
-            Iso.months_in_year(&date.0)
-        }
-
-        fn days_in_year(&self, date: &Self::DateInner) -> u32 {
-            Iso.days_in_year(&date.0)
-        }
-
-        fn days_in_month(&self, date: &Self::DateInner) -> u8 {
-            Iso.days_in_month(&date.0)
-        }
-
-        fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) {
-            Iso.offset_date(&mut date.0, offset.cast_unit())
-        }
-
-        #[allow(clippy::field_reassign_with_default)] // it's more clear this way
-        fn until(
-            &self,
-            date1: &Self::DateInner,
-            date2: &Self::DateInner,
-            _calendar2: &Self,
-            largest_unit: DateDurationUnit,
-            smallest_unit: DateDurationUnit,
-        ) -> DateDuration<Self> {
-            Iso.until(&date1.0, &date2.0, &Iso, largest_unit, smallest_unit)
-                .cast_unit()
-        }
-
-        fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
-            year_as_gregorian(date.0 .0.year)
-        }
-
-        fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
-            Iso.month(&date.0)
-        }
-
-        fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
-            Iso.day_of_month(&date.0)
-        }
-
-        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
-            let prev_year = date.0 .0.year - 1;
-            let next_year = date.0 .0.year + 1;
-            types::DayOfYearInfo {
-                day_of_year: Iso::day_of_year(date.0),
-                days_in_year: Iso::days_in_year_direct(date.0 .0.year),
-                prev_year: year_as_gregorian(prev_year),
-                days_in_prev_year: Iso::days_in_year_direct(prev_year),
-                next_year: year_as_gregorian(next_year),
-            }
-        }
-
-        fn debug_name(&self) -> &'static str {
-            "Gregorian"
-        }
-
-        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> {
-            Some(AnyCalendarKind::Gregorian)
-        }
-    }
-
-    impl Date<Gregorian> {
-        pub fn try_new_gregorian_date(
-            year: i32,
-            month: u8,
-            day: u8,
-        ) -> Result<Date<Gregorian>, CalendarError> {
-            Date::try_new_iso_date(year, month, day).map(|d| Date::new_from_iso(d, Gregorian))
-        }
-    }
-
-    impl DateTime<Gregorian> {
-        pub fn try_new_gregorian_datetime(
-            year: i32,
-            month: u8,
-            day: u8,
-            hour: u8,
-            minute: u8,
-            second: u8,
-        ) -> Result<DateTime<Gregorian>, CalendarError> {
-            Ok(DateTime {
-                date: Date::try_new_gregorian_date(year, month, day)?,
-                time: types::Time::try_new(hour, minute, second, 0)?,
-            })
-        }
-    }
-
-    pub(crate) fn year_as_gregorian(year: i32) -> types::FormattableYear {
-        if year > 0 {
-            types::FormattableYear {
-                era: types::Era(tinystr!(16, "ce")),
-                number: year,
-                related_iso: None,
-            }
-        } else {
-            types::FormattableYear {
-                era: types::Era(tinystr!(16, "bce")),
-                number: 1 - year,
-                related_iso: None,
-            }
-        }
     }
 }
 mod helpers {
@@ -2900,28 +2733,7 @@ pub mod japanese {
             day: u8,
             era2: &str,
             year2: i32,
-        ) {
-            let era = types::Era(era.parse().expect("era must parse"));
-            let era2 = types::Era(era2.parse().expect("era must parse"));
-
-            let expected = Date::try_new_japanese_extended_date(era2, year2, month, day, calendar)
-            .unwrap_or_else(|e| {
-                panic!(
-                    "Failed to construct expectation date with {era2:?}, {year2}, {month}, {day}: {e}"
-                )
-            });
-
-            let date = Date::try_new_japanese_extended_date(era, year, month, day, calendar)
-                .unwrap_or_else(|e| {
-                    panic!("Failed to construct date with {era:?}, {year}, {month}, {day}: {e}")
-                });
-            let iso = date.to_iso();
-            let reconstructed = Date::new_from_iso(iso, calendar);
-            assert_eq!(
-                expected, reconstructed,
-                "Failed to roundtrip with {era:?}, {year}, {month}, {day} == {era2:?}, {year}"
-            )
-        }
+        ) { loop {} }
 
         fn single_test_error(
             calendar: Ref<Japanese>,
@@ -3150,9 +2962,7 @@ pub mod julian {
             date1.0.until(date2.0, _largest_unit, _smallest_unit)
         }
 
-        fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
-            crate::gregorian::year_as_gregorian(date.0.year)
-        }
+        fn year(&self, date: &Self::DateInner) -> types::FormattableYear { loop {} }
 
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             date.0.solar_month()
@@ -3162,17 +2972,7 @@ pub mod julian {
             date.0.day_of_month()
         }
 
-        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
-            let prev_year = date.0.year - 1;
-            let next_year = date.0.year + 1;
-            types::DayOfYearInfo {
-                day_of_year: date.0.day_of_year(),
-                days_in_year: date.0.days_in_year(),
-                prev_year: crate::gregorian::year_as_gregorian(prev_year),
-                days_in_prev_year: Julian::days_in_year_direct(prev_year),
-                next_year: crate::gregorian::year_as_gregorian(next_year),
-            }
-        }
+        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo { loop {} }
 
         fn debug_name(&self) -> &'static str {
             "Julian"
@@ -4512,7 +4312,6 @@ pub use datetime::DateTime;
 #[doc(hidden)]
 pub use duration::{DateDuration, DateDurationUnit};
 pub use error::CalendarError;
-pub use gregorian::Gregorian;
 pub use iso::Iso;
 
 #[doc(no_inline)]
