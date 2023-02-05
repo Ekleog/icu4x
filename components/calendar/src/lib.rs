@@ -691,25 +691,15 @@ pub mod buddhist {
         ) -> Result<Self::DateInner, CalendarError> { loop {} }
         fn date_from_iso(&self, iso: Date<Iso>) -> IsoDateInner { loop {} }
 
-        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> {
-            Date::from_raw(*date, Iso)
-        }
+        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> { loop {} }
 
-        fn months_in_year(&self, date: &Self::DateInner) -> u8 {
-            Iso.months_in_year(date)
-        }
+        fn months_in_year(&self, date: &Self::DateInner) -> u8 { loop {} }
 
-        fn days_in_year(&self, date: &Self::DateInner) -> u32 {
-            Iso.days_in_year(date)
-        }
+        fn days_in_year(&self, date: &Self::DateInner) -> u32 { loop {} }
 
-        fn days_in_month(&self, date: &Self::DateInner) -> u8 {
-            Iso.days_in_month(date)
-        }
+        fn days_in_month(&self, date: &Self::DateInner) -> u8 { loop {} }
 
-        fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) {
-            Iso.offset_date(date, offset.cast_unit())
-        }
+        fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) { loop {} }
 
         #[allow(clippy::field_reassign_with_default)] // it's more clear this way
         fn until(
@@ -719,42 +709,19 @@ pub mod buddhist {
             _calendar2: &Self,
             largest_unit: DateDurationUnit,
             smallest_unit: DateDurationUnit,
-        ) -> DateDuration<Self> {
-            Iso.until(date1, date2, &Iso, largest_unit, smallest_unit)
-                .cast_unit()
-        }
+        ) -> DateDuration<Self> { loop {} }
 
-        fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
-            iso_year_as_buddhist(date.0.year)
-        }
+        fn year(&self, date: &Self::DateInner) -> types::FormattableYear { loop {} }
 
-        fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
-            Iso.month(date)
-        }
+        fn month(&self, date: &Self::DateInner) -> types::FormattableMonth { loop {} }
 
-        fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
-            Iso.day_of_month(date)
-        }
+        fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth { loop {} }
 
-        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
-            let prev_year = date.0.year - 1;
-            let next_year = date.0.year + 1;
-            types::DayOfYearInfo {
-                day_of_year: Iso::day_of_year(*date),
-                days_in_year: Iso::days_in_year_direct(date.0.year),
-                prev_year: iso_year_as_buddhist(prev_year),
-                days_in_prev_year: Iso::days_in_year_direct(prev_year),
-                next_year: iso_year_as_buddhist(next_year),
-            }
-        }
+        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo { loop {} }
 
-        fn debug_name(&self) -> &'static str {
-            "Buddhist"
-        }
+        fn debug_name(&self) -> &'static str { loop {} }
 
-        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> {
-            Some(AnyCalendarKind::Buddhist)
-        }
+        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> { loop {} }
     }
 
     impl Date<Buddhist> {
@@ -762,10 +729,7 @@ pub mod buddhist {
             year: i32,
             month: u8,
             day: u8,
-        ) -> Result<Date<Buddhist>, CalendarError> {
-            Date::try_new_iso_date(year - BUDDHIST_ERA_OFFSET, month, day)
-                .map(|d| Date::new_from_iso(d, Buddhist))
-        }
+        ) -> Result<Date<Buddhist>, CalendarError> { loop {} }
     }
 
     impl DateTime<Buddhist> {
@@ -776,22 +740,10 @@ pub mod buddhist {
             hour: u8,
             minute: u8,
             second: u8,
-        ) -> Result<DateTime<Buddhist>, CalendarError> {
-            Ok(DateTime {
-                date: Date::try_new_buddhist_date(year, month, day)?,
-                time: types::Time::try_new(hour, minute, second, 0)?,
-            })
-        }
+        ) -> Result<DateTime<Buddhist>, CalendarError> { loop {} }
     }
 
-    fn iso_year_as_buddhist(year: i32) -> types::FormattableYear {
-        let buddhist_year = year + BUDDHIST_ERA_OFFSET;
-        types::FormattableYear {
-            era: types::Era(tinystr!(16, "be")),
-            number: buddhist_year,
-            related_iso: None,
-        }
-    }
+    fn iso_year_as_buddhist(year: i32) -> types::FormattableYear { loop {} }
 }
 mod calendar {
 
@@ -867,71 +819,21 @@ mod calendar_arithmetic {
         fn months_for_every_year(year: i32) -> u8;
         fn is_leap_year(year: i32) -> bool;
 
-        fn days_in_provided_year(year: i32) -> u32 {
-            let months_in_year = Self::months_for_every_year(year);
-            let mut days: u32 = 0;
-            for month in 1..=months_in_year {
-                days += Self::month_days(year, month) as u32;
-            }
-            days
-        }
+        fn days_in_provided_year(year: i32) -> u32 { loop {} }
     }
 
     impl<C: CalendarArithmetic> ArithmeticDate<C> {
         #[inline]
-        pub fn new(year: i32, month: u8, day: u8) -> Self {
-            ArithmeticDate {
-                year,
-                month,
-                day,
-                marker: PhantomData,
-            }
-        }
+        pub fn new(year: i32, month: u8, day: u8) -> Self { loop {} }
 
         #[inline]
-        fn offset_days(&mut self, mut day_offset: i32) {
-            while day_offset != 0 {
-                let month_days = C::month_days(self.year, self.month);
-                if self.day as i32 + day_offset > month_days as i32 {
-                    self.offset_months(1);
-                    day_offset -= month_days as i32;
-                } else if self.day as i32 + day_offset < 1 {
-                    self.offset_months(-1);
-                    day_offset += C::month_days(self.year, self.month) as i32;
-                } else {
-                    self.day = (self.day as i32 + day_offset) as u8;
-                    day_offset = 0;
-                }
-            }
-        }
+        fn offset_days(&mut self, mut day_offset: i32) { loop {} }
 
         #[inline]
-        fn offset_months(&mut self, mut month_offset: i32) {
-            while month_offset != 0 {
-                let year_months = C::months_for_every_year(self.year);
-                if self.month as i32 + month_offset > year_months as i32 {
-                    self.year += 1;
-                    month_offset -= year_months as i32;
-                } else if self.month as i32 + month_offset < 1 {
-                    self.year -= 1;
-                    month_offset += C::months_for_every_year(self.year) as i32;
-                } else {
-                    self.month = (self.month as i32 + month_offset) as u8;
-                    month_offset = 0
-                }
-            }
-        }
+        fn offset_months(&mut self, mut month_offset: i32) { loop {} }
 
         #[inline]
-        pub fn offset_date(&mut self, offset: DateDuration<C>) {
-            self.year += offset.years;
-
-            self.offset_months(offset.months);
-
-            let day_offset = offset.days + offset.weeks * 7 + self.day as i32 - 1;
-            self.day = 1;
-            self.offset_days(day_offset);
-        }
+        pub fn offset_date(&mut self, offset: DateDuration<C>) { loop {} }
 
         #[inline]
         pub fn until(
@@ -939,38 +841,19 @@ mod calendar_arithmetic {
             date2: ArithmeticDate<C>,
             _largest_unit: DateDurationUnit,
             _smaller_unti: DateDurationUnit,
-        ) -> DateDuration<C> {
-            DateDuration::new(
-                self.year - date2.year,
-                self.month as i32 - date2.month as i32,
-                0,
-                self.day as i32 - date2.day as i32,
-            )
-        }
+        ) -> DateDuration<C> { loop {} }
 
         #[inline]
-        pub fn days_in_year(&self) -> u32 {
-            C::days_in_provided_year(self.year)
-        }
+        pub fn days_in_year(&self) -> u32 { loop {} }
 
         #[inline]
-        pub fn months_in_year(&self) -> u8 {
-            C::months_for_every_year(self.year)
-        }
+        pub fn months_in_year(&self) -> u8 { loop {} }
 
         #[inline]
-        pub fn days_in_month(&self) -> u8 {
-            C::month_days(self.year, self.month)
-        }
+        pub fn days_in_month(&self) -> u8 { loop {} }
 
         #[inline]
-        pub fn day_of_year(&self) -> u32 {
-            let mut day_of_year = 0;
-            for month in 1..self.month {
-                day_of_year += C::month_days(self.year, month) as u32;
-            }
-            day_of_year + (self.day as u32)
-        }
+        pub fn day_of_year(&self) -> u32 { loop {} }
 
         #[inline]
         pub fn date_from_year_day(year: i32, year_day: u32) -> ArithmeticDate<C> {
