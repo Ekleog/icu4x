@@ -856,106 +856,23 @@ mod calendar_arithmetic {
         pub fn day_of_year(&self) -> u32 { loop {} }
 
         #[inline]
-        pub fn date_from_year_day(year: i32, year_day: u32) -> ArithmeticDate<C> {
-            let mut month = 1;
-            let mut day = year_day as i32;
-            while month <= C::months_for_every_year(year) {
-                let month_days = C::month_days(year, month) as i32;
-                if day <= month_days {
-                    break;
-                } else {
-                    day -= month_days;
-                    month += 1;
-                }
-            }
-
-            debug_assert!(day <= C::month_days(year, month) as i32);
-            #[allow(clippy::unwrap_used)]
-            ArithmeticDate {
-                year,
-                month,
-                day: day.try_into().unwrap_or(0),
-                marker: PhantomData,
-            }
-        }
+        pub fn date_from_year_day(year: i32, year_day: u32) -> ArithmeticDate<C> { loop {} }
 
         #[inline]
-        pub fn day_of_month(&self) -> types::DayOfMonth {
-            types::DayOfMonth(self.day.into())
-        }
+        pub fn day_of_month(&self) -> types::DayOfMonth { loop {} }
 
         #[inline]
-        pub fn solar_month(&self) -> types::FormattableMonth {
-            let code = match self.month {
-                a if a > C::months_for_every_year(self.year) => tinystr!(4, "und"),
-                1 => tinystr!(4, "M01"),
-                2 => tinystr!(4, "M02"),
-                3 => tinystr!(4, "M03"),
-                4 => tinystr!(4, "M04"),
-                5 => tinystr!(4, "M05"),
-                6 => tinystr!(4, "M06"),
-                7 => tinystr!(4, "M07"),
-                8 => tinystr!(4, "M08"),
-                9 => tinystr!(4, "M09"),
-                10 => tinystr!(4, "M10"),
-                11 => tinystr!(4, "M11"),
-                12 => tinystr!(4, "M12"),
-                13 => tinystr!(4, "M13"),
-                _ => tinystr!(4, "und"),
-            };
-            types::FormattableMonth {
-                ordinal: self.month as u32,
-                code: types::MonthCode(code),
-            }
-        }
+        pub fn solar_month(&self) -> types::FormattableMonth { loop {} }
 
         pub fn new_from_solar<C2: Calendar>(
             cal: &C2,
             year: i32,
             month_code: types::MonthCode,
             day: u8,
-        ) -> Result<Self, CalendarError> {
-            let month = if let Some(ordinal) = ordinal_solar_month_from_code(month_code) {
-                ordinal
-            } else {
-                return Err(CalendarError::UnknownMonthCode(
-                    month_code.0,
-                    cal.debug_name(),
-                ));
-            };
-
-            if month > C::months_for_every_year(year) {
-                return Err(CalendarError::UnknownMonthCode(
-                    month_code.0,
-                    cal.debug_name(),
-                ));
-            }
-
-            if day > C::month_days(year, month) {
-                return Err(CalendarError::OutOfRange);
-            }
-
-            Ok(Self::new(year, month, day))
-        }
+        ) -> Result<Self, CalendarError> { loop {} }
     }
 
-    pub fn ordinal_solar_month_from_code(code: types::MonthCode) -> Option<u8> {
-        if code.0.len() != 3 {
-            return None;
-        }
-        let bytes = code.0.all_bytes();
-        if bytes[0] != b'M' {
-            return None;
-        }
-        if bytes[1] == b'0' {
-            if bytes[2] >= b'1' && bytes[2] <= b'9' {
-                return Some(bytes[2] - b'0');
-            }
-        } else if bytes[1] == b'1' && bytes[2] >= b'1' && bytes[2] <= b'3' {
-            return Some(10 + bytes[2] - b'0');
-        }
-        None
-    }
+    pub fn ordinal_solar_month_from_code(code: types::MonthCode) -> Option<u8> { loop {} }
 }
 pub mod coptic {
 
@@ -978,35 +895,13 @@ pub mod coptic {
     pub struct CopticDateInner(pub(crate) ArithmeticDate<Coptic>);
 
     impl CalendarArithmetic for Coptic {
-        fn month_days(year: i32, month: u8) -> u8 {
-            if (1..=12).contains(&month) {
-                30
-            } else if month == 13 {
-                if Self::is_leap_year(year) {
-                    6
-                } else {
-                    5
-                }
-            } else {
-                0
-            }
-        }
+        fn month_days(year: i32, month: u8) -> u8 { loop {} }
 
-        fn months_for_every_year(_: i32) -> u8 {
-            13
-        }
+        fn months_for_every_year(_: i32) -> u8 { loop {} }
 
-        fn is_leap_year(year: i32) -> bool {
-            year % 4 == 3
-        }
+        fn is_leap_year(year: i32) -> bool { loop {} }
 
-        fn days_in_provided_year(year: i32) -> u32 {
-            if Self::is_leap_year(year) {
-                366
-            } else {
-                365
-            }
-        }
+        fn days_in_provided_year(year: i32) -> u32 { loop {} }
     }
 
     impl Calendar for Coptic {
@@ -1017,52 +912,20 @@ pub mod coptic {
             year: i32,
             month_code: types::MonthCode,
             day: u8,
-        ) -> Result<Self::DateInner, CalendarError> {
-            let year = if era.0 == tinystr!(16, "ad") {
-                if year <= 0 {
-                    return Err(CalendarError::OutOfRange);
-                }
-                year
-            } else if era.0 == tinystr!(16, "bd") {
-                if year <= 0 {
-                    return Err(CalendarError::OutOfRange);
-                }
-                1 - year
-            } else {
-                return Err(CalendarError::UnknownEra(era.0, self.debug_name()));
-            };
+        ) -> Result<Self::DateInner, CalendarError> { loop {} }
+        fn date_from_iso(&self, iso: Date<Iso>) -> CopticDateInner { loop {} }
 
-            ArithmeticDate::new_from_solar(self, year, month_code, day).map(CopticDateInner)
-        }
-        fn date_from_iso(&self, iso: Date<Iso>) -> CopticDateInner {
-            let fixed_iso = Iso::fixed_from_iso(*iso.inner());
-            Self::coptic_from_fixed(fixed_iso)
-        }
+        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> { loop {} }
 
-        fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso> {
-            let fixed_coptic = Coptic::fixed_from_coptic(date.0);
-            Iso::iso_from_fixed(fixed_coptic)
-        }
+        fn months_in_year(&self, date: &Self::DateInner) -> u8 { loop {} }
 
-        fn months_in_year(&self, date: &Self::DateInner) -> u8 {
-            date.0.months_in_year()
-        }
+        fn days_in_year(&self, date: &Self::DateInner) -> u32 { loop {} }
 
-        fn days_in_year(&self, date: &Self::DateInner) -> u32 {
-            date.0.days_in_year()
-        }
+        fn days_in_month(&self, date: &Self::DateInner) -> u8 { loop {} }
 
-        fn days_in_month(&self, date: &Self::DateInner) -> u8 {
-            date.0.days_in_month()
-        }
+        fn day_of_week(&self, date: &Self::DateInner) -> types::IsoWeekday { loop {} }
 
-        fn day_of_week(&self, date: &Self::DateInner) -> types::IsoWeekday {
-            Iso.day_of_week(Coptic.date_to_iso(date).inner())
-        }
-
-        fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) {
-            date.0.offset_date(offset);
-        }
+        fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) { loop {} }
 
         #[allow(clippy::field_reassign_with_default)]
         fn until(
@@ -1072,80 +935,31 @@ pub mod coptic {
             _calendar2: &Self,
             _largest_unit: DateDurationUnit,
             _smallest_unit: DateDurationUnit,
-        ) -> DateDuration<Self> {
-            date1.0.until(date2.0, _largest_unit, _smallest_unit)
-        }
+        ) -> DateDuration<Self> { loop {} }
 
-        fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
-            year_as_coptic(date.0.year)
-        }
+        fn year(&self, date: &Self::DateInner) -> types::FormattableYear { loop {} }
 
-        fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
-            date.0.solar_month()
-        }
+        fn month(&self, date: &Self::DateInner) -> types::FormattableMonth { loop {} }
 
-        fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
-            date.0.day_of_month()
-        }
+        fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth { loop {} }
 
-        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
-            let prev_year = date.0.year - 1;
-            let next_year = date.0.year + 1;
-            types::DayOfYearInfo {
-                day_of_year: date.0.day_of_year(),
-                days_in_year: date.0.days_in_year(),
-                prev_year: year_as_coptic(prev_year),
-                days_in_prev_year: Coptic::days_in_year_direct(prev_year),
-                next_year: year_as_coptic(next_year),
-            }
-        }
+        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo { loop {} }
 
-        fn debug_name(&self) -> &'static str {
-            "Coptic"
-        }
+        fn debug_name(&self) -> &'static str { loop {} }
 
-        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> {
-            Some(AnyCalendarKind::Coptic)
-        }
+        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> { loop {} }
     }
 
     pub(crate) const COPTIC_EPOCH: i32 = Julian::fixed_from_julian_integers(284, 8, 29);
 
     impl Coptic {
-        fn fixed_from_coptic(date: ArithmeticDate<Coptic>) -> i32 {
-            COPTIC_EPOCH - 1
-                + 365 * (date.year - 1)
-                + quotient(date.year, 4)
-                + 30 * (date.month as i32 - 1)
-                + date.day as i32
-        }
+        fn fixed_from_coptic(date: ArithmeticDate<Coptic>) -> i32 { loop {} }
 
-        pub(crate) fn fixed_from_coptic_integers(year: i32, month: u8, day: u8) -> i32 {
-            Self::fixed_from_coptic(ArithmeticDate {
-                year,
-                month,
-                day,
-                marker: PhantomData,
-            })
-        }
+        pub(crate) fn fixed_from_coptic_integers(year: i32, month: u8, day: u8) -> i32 { loop {} }
 
-        pub(crate) fn coptic_from_fixed(date: i32) -> CopticDateInner {
-            let year = quotient(4 * (date - COPTIC_EPOCH) + 1463, 1461);
-            let month =
-                (quotient(date - Self::fixed_from_coptic_integers(year, 1, 1), 30) + 1) as u8; // <= 12 < u8::MAX
-            let day = (date + 1 - Self::fixed_from_coptic_integers(year, month, 1)) as u8; // <= days_in_month < u8::MAX
+        pub(crate) fn coptic_from_fixed(date: i32) -> CopticDateInner { loop {} }
 
-            #[allow(clippy::unwrap_used)] // day and month have the correct bounds
-            *Date::try_new_coptic_date(year, month, day).unwrap().inner()
-        }
-
-        fn days_in_year_direct(year: i32) -> u32 {
-            if Coptic::is_leap_year(year) {
-                366
-            } else {
-                365
-            }
-        }
+        fn days_in_year_direct(year: i32) -> u32 { loop {} }
     }
 
     impl Date<Coptic> {
@@ -1153,21 +967,7 @@ pub mod coptic {
             year: i32,
             month: u8,
             day: u8,
-        ) -> Result<Date<Coptic>, CalendarError> {
-            let inner = ArithmeticDate {
-                year,
-                month,
-                day,
-                marker: PhantomData,
-            };
-
-            let bound = inner.days_in_month();
-            if day > bound {
-                return Err(CalendarError::OutOfRange);
-            }
-
-            Ok(Date::from_raw(CopticDateInner(inner), Coptic))
-        }
+        ) -> Result<Date<Coptic>, CalendarError> { loop {} }
     }
 
     impl DateTime<Coptic> {
