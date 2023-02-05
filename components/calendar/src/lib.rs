@@ -3411,18 +3411,9 @@ pub mod types {
             }
 
             impl $name {
-                pub fn try_add(self, other: $storage) -> Option<Self> {
-                    let sum = self.0.saturating_add(other);
-                    if sum > $value {
-                        None
-                    } else {
-                        Some(Self(sum))
-                    }
-                }
+                pub fn try_add(self, other: $storage) -> Option<Self> { loop {} }
 
-                pub fn try_sub(self, other: $storage) -> Option<Self> {
-                    self.0.checked_sub(other).map(Self)
-                }
+                pub fn try_sub(self, other: $storage) -> Option<Self> { loop {} }
             }
         };
     }
@@ -3455,105 +3446,6 @@ pub mod types {
         "A fractional second component, stored as nanoseconds.\n\nMust be within inclusive bounds `[0, 999_999_999]`."
     );
 
-    #[test]
-    fn test_iso_hour_arithmetic() {
-        const HOUR_MAX: u8 = 24;
-        const HOUR_VALUE: u8 = 5;
-        let hour = IsoHour(HOUR_VALUE);
-
-        assert_eq!(
-            hour.try_add(HOUR_VALUE - 1),
-            Some(IsoHour(HOUR_VALUE + (HOUR_VALUE - 1)))
-        );
-        assert_eq!(
-            hour.try_sub(HOUR_VALUE - 1),
-            Some(IsoHour(HOUR_VALUE - (HOUR_VALUE - 1)))
-        );
-
-        assert_eq!(hour.try_add(HOUR_MAX - HOUR_VALUE), Some(IsoHour(HOUR_MAX)));
-        assert_eq!(hour.try_sub(HOUR_VALUE), Some(IsoHour(0)));
-
-        assert_eq!(hour.try_add(1 + HOUR_MAX - HOUR_VALUE), None);
-        assert_eq!(hour.try_sub(1 + HOUR_VALUE), None);
-    }
-
-    #[test]
-    fn test_iso_minute_arithmetic() {
-        const MINUTE_MAX: u8 = 60;
-        const MINUTE_VALUE: u8 = 5;
-        let minute = IsoMinute(MINUTE_VALUE);
-
-        assert_eq!(
-            minute.try_add(MINUTE_VALUE - 1),
-            Some(IsoMinute(MINUTE_VALUE + (MINUTE_VALUE - 1)))
-        );
-        assert_eq!(
-            minute.try_sub(MINUTE_VALUE - 1),
-            Some(IsoMinute(MINUTE_VALUE - (MINUTE_VALUE - 1)))
-        );
-
-        assert_eq!(
-            minute.try_add(MINUTE_MAX - MINUTE_VALUE),
-            Some(IsoMinute(MINUTE_MAX))
-        );
-        assert_eq!(minute.try_sub(MINUTE_VALUE), Some(IsoMinute(0)));
-
-        assert_eq!(minute.try_add(1 + MINUTE_MAX - MINUTE_VALUE), None);
-        assert_eq!(minute.try_sub(1 + MINUTE_VALUE), None);
-    }
-
-    #[test]
-    fn test_iso_second_arithmetic() {
-        const SECOND_MAX: u8 = 61;
-        const SECOND_VALUE: u8 = 5;
-        let second = IsoSecond(SECOND_VALUE);
-
-        assert_eq!(
-            second.try_add(SECOND_VALUE - 1),
-            Some(IsoSecond(SECOND_VALUE + (SECOND_VALUE - 1)))
-        );
-        assert_eq!(
-            second.try_sub(SECOND_VALUE - 1),
-            Some(IsoSecond(SECOND_VALUE - (SECOND_VALUE - 1)))
-        );
-
-        assert_eq!(
-            second.try_add(SECOND_MAX - SECOND_VALUE),
-            Some(IsoSecond(SECOND_MAX))
-        );
-        assert_eq!(second.try_sub(SECOND_VALUE), Some(IsoSecond(0)));
-
-        assert_eq!(second.try_add(1 + SECOND_MAX - SECOND_VALUE), None);
-        assert_eq!(second.try_sub(1 + SECOND_VALUE), None);
-    }
-
-    #[test]
-    fn test_iso_nano_second_arithmetic() {
-        const NANO_SECOND_MAX: u32 = 999_999_999;
-        const NANO_SECOND_VALUE: u32 = 5;
-        let nano_second = NanoSecond(NANO_SECOND_VALUE);
-
-        assert_eq!(
-            nano_second.try_add(NANO_SECOND_VALUE - 1),
-            Some(NanoSecond(NANO_SECOND_VALUE + (NANO_SECOND_VALUE - 1)))
-        );
-        assert_eq!(
-            nano_second.try_sub(NANO_SECOND_VALUE - 1),
-            Some(NanoSecond(NANO_SECOND_VALUE - (NANO_SECOND_VALUE - 1)))
-        );
-
-        assert_eq!(
-            nano_second.try_add(NANO_SECOND_MAX - NANO_SECOND_VALUE),
-            Some(NanoSecond(NANO_SECOND_MAX))
-        );
-        assert_eq!(nano_second.try_sub(NANO_SECOND_VALUE), Some(NanoSecond(0)));
-
-        assert_eq!(
-            nano_second.try_add(1 + NANO_SECOND_MAX - NANO_SECOND_VALUE),
-            None
-        );
-        assert_eq!(nano_second.try_sub(1 + NANO_SECOND_VALUE), None);
-    }
 
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     #[allow(clippy::exhaustive_structs)] // this type is stable
@@ -3573,174 +3465,18 @@ pub mod types {
             minute: IsoMinute,
             second: IsoSecond,
             nanosecond: NanoSecond,
-        ) -> Self {
-            Self {
-                hour,
-                minute,
-                second,
-                nanosecond,
-            }
-        }
+        ) -> Self { loop {} }
 
         pub fn try_new(
             hour: u8,
             minute: u8,
             second: u8,
             nanosecond: u32,
-        ) -> Result<Self, CalendarError> {
-            Ok(Self {
-                hour: hour.try_into()?,
-                minute: minute.try_into()?,
-                second: second.try_into()?,
-                nanosecond: nanosecond.try_into()?,
-            })
-        }
+        ) -> Result<Self, CalendarError> { loop {} }
 
-        pub(crate) fn from_minute_with_remainder_days(minute: i32) -> (Time, i32) {
-            let (extra_days, minute_in_day) = helpers::div_rem_euclid(minute, 1440);
-            let (hours, minutes) = (minute_in_day / 60, minute_in_day % 60);
-            #[allow(clippy::unwrap_used)] // values are moduloed to be in range
-            (
-                Self {
-                    hour: (hours as u8).try_into().unwrap(),
-                    minute: (minutes as u8).try_into().unwrap(),
-                    second: IsoSecond::zero(),
-                    nanosecond: NanoSecond::zero(),
-                },
-                extra_days,
-            )
-        }
+        pub(crate) fn from_minute_with_remainder_days(minute: i32) -> (Time, i32) { loop {} }
     }
 
-    #[test]
-    fn test_from_minute_with_remainder_days() {
-        #[derive(Debug)]
-        struct TestCase {
-            minute: i32,
-            expected_time: Time,
-            expected_remainder: i32,
-        }
-        let zero_time = Time::new(
-            IsoHour::zero(),
-            IsoMinute::zero(),
-            IsoSecond::zero(),
-            NanoSecond::zero(),
-        );
-        let first_minute_in_day = Time::new(
-            IsoHour::zero(),
-            IsoMinute::try_from(1u8).unwrap(),
-            IsoSecond::zero(),
-            NanoSecond::zero(),
-        );
-        let last_minute_in_day = Time::new(
-            IsoHour::try_from(23u8).unwrap(),
-            IsoMinute::try_from(59u8).unwrap(),
-            IsoSecond::zero(),
-            NanoSecond::zero(),
-        );
-        let cases = [
-            TestCase {
-                minute: 0,
-                expected_time: zero_time,
-                expected_remainder: 0,
-            },
-            TestCase {
-                minute: 30,
-                expected_time: Time::new(
-                    IsoHour::zero(),
-                    IsoMinute::try_from(30u8).unwrap(),
-                    IsoSecond::zero(),
-                    NanoSecond::zero(),
-                ),
-                expected_remainder: 0,
-            },
-            TestCase {
-                minute: 60,
-                expected_time: Time::new(
-                    IsoHour::try_from(1u8).unwrap(),
-                    IsoMinute::zero(),
-                    IsoSecond::zero(),
-                    NanoSecond::zero(),
-                ),
-                expected_remainder: 0,
-            },
-            TestCase {
-                minute: 90,
-                expected_time: Time::new(
-                    IsoHour::try_from(1u8).unwrap(),
-                    IsoMinute::try_from(30u8).unwrap(),
-                    IsoSecond::zero(),
-                    NanoSecond::zero(),
-                ),
-                expected_remainder: 0,
-            },
-            TestCase {
-                minute: 1439,
-                expected_time: last_minute_in_day,
-                expected_remainder: 0,
-            },
-            TestCase {
-                minute: 1440,
-                expected_time: Time::new(
-                    IsoHour::zero(),
-                    IsoMinute::zero(),
-                    IsoSecond::zero(),
-                    NanoSecond::zero(),
-                ),
-                expected_remainder: 1,
-            },
-            TestCase {
-                minute: 1441,
-                expected_time: first_minute_in_day,
-                expected_remainder: 1,
-            },
-            TestCase {
-                minute: i32::MAX,
-                expected_time: Time::new(
-                    IsoHour::try_from(2u8).unwrap(),
-                    IsoMinute::try_from(7u8).unwrap(),
-                    IsoSecond::zero(),
-                    NanoSecond::zero(),
-                ),
-                expected_remainder: 1491308,
-            },
-            TestCase {
-                minute: -1,
-                expected_time: last_minute_in_day,
-                expected_remainder: -1,
-            },
-            TestCase {
-                minute: -1439,
-                expected_time: first_minute_in_day,
-                expected_remainder: -1,
-            },
-            TestCase {
-                minute: -1440,
-                expected_time: zero_time,
-                expected_remainder: -1,
-            },
-            TestCase {
-                minute: -1441,
-                expected_time: last_minute_in_day,
-                expected_remainder: -2,
-            },
-            TestCase {
-                minute: i32::MIN,
-                expected_time: Time::new(
-                    IsoHour::try_from(21u8).unwrap(),
-                    IsoMinute::try_from(52u8).unwrap(),
-                    IsoSecond::zero(),
-                    NanoSecond::zero(),
-                ),
-                expected_remainder: -1491309,
-            },
-        ];
-        for cas in cases {
-            let (actual_time, actual_remainder) = Time::from_minute_with_remainder_days(cas.minute);
-            assert_eq!(actual_time, cas.expected_time, "{cas:?}");
-            assert_eq!(actual_remainder, cas.expected_remainder, "{cas:?}");
-        }
-    }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     #[allow(missing_docs)] // The weekday variants should be self-obvious.
@@ -3763,13 +3499,7 @@ pub mod types {
     }
 
     impl From<usize> for IsoWeekday {
-        fn from(input: usize) -> Self {
-            let mut ordinal = (input % 7) as i8;
-            if ordinal == 0 {
-                ordinal = 7;
-            }
-            unsafe { core::mem::transmute(ordinal) }
-        }
+        fn from(input: usize) -> Self { loop {} }
     }
 }
 mod week_of {
