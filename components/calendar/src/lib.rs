@@ -3366,17 +3366,11 @@ pub mod types {
     pub struct DayOfWeekInMonth(pub u32);
 
     impl From<DayOfMonth> for DayOfWeekInMonth {
-        fn from(day_of_month: DayOfMonth) -> Self {
-            DayOfWeekInMonth(1 + ((day_of_month.0 - 1) / 7))
-        }
+        fn from(day_of_month: DayOfMonth) -> Self { loop {} }
     }
 
     #[test]
-    fn test_day_of_week_in_month() {
-        assert_eq!(DayOfWeekInMonth::from(DayOfMonth(1)).0, 1);
-        assert_eq!(DayOfWeekInMonth::from(DayOfMonth(7)).0, 1);
-        assert_eq!(DayOfWeekInMonth::from(DayOfMonth(8)).0, 2);
-    }
+    fn test_day_of_week_in_month() { loop {} }
 
     macro_rules! dt_unit {
         ($name:ident, $storage:ident, $value:expr, $docs:expr) => {
@@ -3385,71 +3379,35 @@ pub mod types {
             pub struct $name($storage);
 
             impl $name {
-                pub const fn number(self) -> $storage {
-                    self.0
-                }
+                pub const fn number(self) -> $storage { loop {} }
 
-                pub const fn zero() -> $name {
-                    Self(0)
-                }
+                pub const fn zero() -> $name { loop {} }
             }
 
             impl FromStr for $name {
                 type Err = CalendarError;
 
-                fn from_str(input: &str) -> Result<Self, Self::Err> {
-                    let val: $storage = input.parse()?;
-                    if val > $value {
-                        Err(CalendarError::Overflow {
-                            field: "$name",
-                            max: $value,
-                        })
-                    } else {
-                        Ok(Self(val))
-                    }
-                }
+                fn from_str(input: &str) -> Result<Self, Self::Err> { loop {} }
             }
 
             impl TryFrom<$storage> for $name {
                 type Error = CalendarError;
 
-                fn try_from(input: $storage) -> Result<Self, Self::Error> {
-                    if input > $value {
-                        Err(CalendarError::Overflow {
-                            field: "$name",
-                            max: $value,
-                        })
-                    } else {
-                        Ok(Self(input))
-                    }
-                }
+                fn try_from(input: $storage) -> Result<Self, Self::Error> { loop {} }
             }
 
             impl TryFrom<usize> for $name {
                 type Error = CalendarError;
 
-                fn try_from(input: usize) -> Result<Self, Self::Error> {
-                    if input > $value {
-                        Err(CalendarError::Overflow {
-                            field: "$name",
-                            max: $value,
-                        })
-                    } else {
-                        Ok(Self(input as $storage))
-                    }
-                }
+                fn try_from(input: usize) -> Result<Self, Self::Error> { loop {} }
             }
 
             impl From<$name> for $storage {
-                fn from(input: $name) -> Self {
-                    input.0
-                }
+                fn from(input: $name) -> Self { loop {} }
             }
 
             impl From<$name> for usize {
-                fn from(input: $name) -> Self {
-                    input.0 as Self
-                }
+                fn from(input: $name) -> Self { loop {} }
             }
 
             impl $name {
