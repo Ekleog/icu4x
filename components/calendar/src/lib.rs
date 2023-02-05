@@ -2,11 +2,7 @@
 
 extern crate alloc;
 
-// Make sure inherent docs go first
 mod date {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
     use crate::any_calendar::{AnyCalendar, IntoAnyCalendar};
     use crate::week::{WeekCalculator, WeekOf};
@@ -16,14 +12,8 @@ mod date {
     use core::fmt;
     use core::ops::Deref;
 
-    /// Types that contain a calendar
-    ///
-    /// This allows one to use [`Date`] with wrappers around calendars,
-    /// e.g. reference counted calendars.
     pub trait AsCalendar {
-        /// The calendar being wrapped
         type Calendar: Calendar;
-        /// Obtain the inner calendar
         fn as_calendar(&self) -> &Self::Calendar;
     }
 
@@ -51,15 +41,6 @@ mod date {
         }
     }
 
-    /// This exists as a wrapper around `&'a T` so that
-    /// `Date<&'a C>` is possible for calendar `C`.
-    ///
-    /// Unfortunately,
-    /// [`AsCalendar`] cannot be implemented on `&'a T` directly because
-    /// `&'a T` is `#[fundamental]` and the impl would clash with the one above with
-    /// `AsCalendar` for `C: Calendar`.
-    ///
-    /// Use `Date<Ref<'a, C>>` where you would use `Date<&'a C>`
     #[allow(clippy::exhaustive_structs)] // newtype
     #[derive(PartialEq, Eq, Debug)]
     pub struct Ref<'a, C>(pub &'a C);
@@ -87,26 +68,6 @@ mod date {
         }
     }
 
-    /// A date for a given calendar.
-    ///
-    /// This can work with wrappers around [`Calendar`] types,
-    /// e.g. `Rc<C>`, via the [`AsCalendar`] trait.
-    ///
-    /// This can be constructed  constructed
-    /// from its fields via [`Self::try_new_from_codes()`], or can be constructed with one of the
-    /// `new_<calendar>_datetime()` per-calendar methods (and then freely converted between calendars).
-    ///
-    /// ```rust
-    /// use icu::calendar::Date;
-    ///
-    /// // Example: creation of ISO date from integers.
-    /// let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    ///     .expect("Failed to initialize ISO Date instance.");
-    ///
-    /// assert_eq!(date_iso.year().number, 1970);
-    /// assert_eq!(date_iso.month().ordinal, 1);
-    /// assert_eq!(date_iso.day_of_month().0, 2);
-    /// ```
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
     pub struct Date<A: AsCalendar> {
         pub(crate) inner: <A::Calendar as Calendar>::DateInner,
@@ -114,7 +75,6 @@ mod date {
     }
 
     impl<A: AsCalendar> Date<A> {
-        /// Construct a date from from era/month codes and fields, and some calendar representation
         #[inline]
         pub fn try_new_from_codes(
             era: types::Era,
@@ -129,54 +89,42 @@ mod date {
             Ok(Date { inner, calendar })
         }
 
-        /// Construct a date from an ISO date and some calendar representation
         #[inline]
         pub fn new_from_iso(iso: Date<Iso>, calendar: A) -> Self {
             let inner = calendar.as_calendar().date_from_iso(iso);
             Date { inner, calendar }
         }
 
-        /// Convert the Date to an ISO Date
         #[inline]
         pub fn to_iso(&self) -> Date<Iso> {
             self.calendar.as_calendar().date_to_iso(self.inner())
         }
 
-        /// Convert the Date to a date in a different calendar
         #[inline]
         pub fn to_calendar<A2: AsCalendar>(&self, calendar: A2) -> Date<A2> {
             Date::new_from_iso(self.to_iso(), calendar)
         }
 
-        /// The number of months in the year of this date
         #[inline]
         pub fn months_in_year(&self) -> u8 {
             self.calendar.as_calendar().months_in_year(self.inner())
         }
 
-        /// The number of days in the year of this date
         #[inline]
         pub fn days_in_year(&self) -> u32 {
             self.calendar.as_calendar().days_in_year(self.inner())
         }
 
-        /// The number of days in the month of this date
         #[inline]
         pub fn days_in_month(&self) -> u8 {
             self.calendar.as_calendar().days_in_month(self.inner())
         }
 
-        /// The day of the week for this date
-        ///
-        /// Monday is 1, Sunday is 7, according to ISO
         #[inline]
         pub fn day_of_week(&self) -> types::IsoWeekday {
             self.calendar.as_calendar().day_of_week(self.inner())
         }
 
-        /// Add a `duration` to this date, mutating it
-        ///
-        /// Currently unstable for ICU4X 1.0
         #[doc(hidden)]
         #[inline]
         pub fn add(&mut self, duration: DateDuration<A::Calendar>) {
@@ -185,9 +133,6 @@ mod date {
                 .offset_date(&mut self.inner, duration)
         }
 
-        /// Add a `duration` to this date, returning the new one
-        ///
-        /// Currently unstable for ICU4X 1.0
         #[doc(hidden)]
         #[inline]
         pub fn added(mut self, duration: DateDuration<A::Calendar>) -> Self {
@@ -195,9 +140,6 @@ mod date {
             self
         }
 
-        /// Calculating the duration between `other - self`
-        ///
-        /// Currently unstable for ICU4X 1.0
         #[doc(hidden)]
         #[inline]
         pub fn until<B: AsCalendar<Calendar = A::Calendar>>(
@@ -215,46 +157,26 @@ mod date {
             )
         }
 
-        /// The calendar-specific year represented by `self`
         #[inline]
         pub fn year(&self) -> types::FormattableYear {
             self.calendar.as_calendar().year(&self.inner)
         }
 
-        /// The calendar-specific month represented by `self`
         #[inline]
         pub fn month(&self) -> types::FormattableMonth {
             self.calendar.as_calendar().month(&self.inner)
         }
 
-        /// The calendar-specific day-of-month represented by `self`
         #[inline]
         pub fn day_of_month(&self) -> types::DayOfMonth {
             self.calendar.as_calendar().day_of_month(&self.inner)
         }
 
-        /// The calendar-specific day-of-month represented by `self`
         #[inline]
         pub fn day_of_year_info(&self) -> types::DayOfYearInfo {
             self.calendar.as_calendar().day_of_year_info(&self.inner)
         }
 
-        /// The week of the month containing this date.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use icu::calendar::types::IsoWeekday;
-        /// use icu::calendar::types::WeekOfMonth;
-        /// use icu::calendar::Date;
-        ///
-        /// let date = Date::try_new_iso_date(2022, 8, 10).unwrap(); // second Wednesday
-        ///
-        /// // The following info is usually locale-specific
-        /// let first_weekday = IsoWeekday::Sunday;
-        ///
-        /// assert_eq!(date.week_of_month(first_weekday), WeekOfMonth(2));
-        /// ```
         pub fn week_of_month(&self, first_weekday: types::IsoWeekday) -> types::WeekOfMonth {
             let config = WeekCalculator {
                 first_weekday,
@@ -263,62 +185,25 @@ mod date {
             config.week_of_month(self.day_of_month(), self.day_of_week())
         }
 
-        /// The week of the year containing this date.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use icu::calendar::types::IsoWeekday;
-        /// use icu::calendar::week::RelativeUnit;
-        /// use icu::calendar::week::WeekCalculator;
-        /// use icu::calendar::week::WeekOf;
-        /// use icu::calendar::Date;
-        ///
-        /// let date = Date::try_new_iso_date(2022, 8, 26).unwrap();
-        ///
-        /// // The following info is usually locale-specific
-        /// let week_calculator = WeekCalculator::default();
-        ///
-        /// assert_eq!(
-        ///     date.week_of_year(&week_calculator),
-        ///     Ok(WeekOf {
-        ///         week: 35,
-        ///         unit: RelativeUnit::Current
-        ///     })
-        /// );
-        /// ```
         pub fn week_of_year(&self, config: &WeekCalculator) -> Result<WeekOf, CalendarError> {
             config.week_of_year(self.day_of_year_info(), self.day_of_week())
         }
 
-        /// Construct a date from raw values for a given calendar. This does not check any
-        /// invariants for the date and calendar, and should only be called by calendar implementations.
-        ///
-        /// Calling this outside of calendar implementations is sound, but calendar implementations are not
-        /// expected to do anything sensible with such invalid dates.
-        ///
-        /// AnyCalendar *will* panic if AnyCalendar [`Date`] objects with mismatching
-        /// date and calendar types are constructed
         #[inline]
         pub fn from_raw(inner: <A::Calendar as Calendar>::DateInner, calendar: A) -> Self {
             Self { inner, calendar }
         }
 
-        /// Get the inner date implementation. Should not be called outside of calendar implementations
         #[inline]
         pub fn inner(&self) -> &<A::Calendar as Calendar>::DateInner {
             &self.inner
         }
 
-        /// Get a reference to the contained calendar
         #[inline]
         pub fn calendar(&self) -> &A::Calendar {
             self.calendar.as_calendar()
         }
 
-        /// Get a reference to the contained calendar wrapper
-        ///
-        /// (Useful in case the user wishes to e.g. clone an Rc)
         #[inline]
         pub fn calendar_wrapper(&self) -> &A {
             &self.calendar
@@ -326,7 +211,6 @@ mod date {
     }
 
     impl<C: IntoAnyCalendar, A: AsCalendar<Calendar = C>> Date<A> {
-        /// Type-erase the date, converting it to a date for [`AnyCalendar`]
         pub fn to_any(&self) -> Date<AnyCalendar> {
             let cal = self.calendar();
             Date::from_raw(cal.date_to_any(self.inner()), cal.to_any_cloned())
@@ -334,16 +218,10 @@ mod date {
     }
 
     impl<C: Calendar> Date<C> {
-        /// Wrap the calendar type in `Rc<T>`
-        ///
-        /// Useful when paired with [`Self::to_any()`] to obtain a `Date<Rc<AnyCalendar>>`
         pub fn wrap_calendar_in_rc(self) -> Date<Rc<C>> {
             Date::from_raw(self.inner, Rc::new(self.calendar))
         }
 
-        /// Wrap the calendar type in `Arc<T>`
-        ///
-        /// Useful when paired with [`Self::to_any()`] to obtain a `Date<Rc<AnyCalendar>>`
         pub fn wrap_calendar_in_arc(self) -> Date<Arc<C>> {
             Date::from_raw(self.inner, Arc::new(self.calendar))
         }
@@ -390,9 +268,6 @@ mod date {
     }
 }
 mod datetime {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
     use crate::any_calendar::{AnyCalendar, IntoAnyCalendar};
     use crate::types::{self, Time};
@@ -400,47 +275,18 @@ mod datetime {
     use alloc::rc::Rc;
     use alloc::sync::Arc;
 
-    /// A date+time for a given calendar.
-    ///
-    /// This can work with wrappers around [`Calendar`](crate::Calendar) types,
-    /// e.g. `Rc<C>`, via the [`AsCalendar`] trait, much like
-    /// [`Date`].
-    ///
-    /// This can be constructed manually from a [`Date`] and [`Time`], or can be constructed
-    /// from its fields via [`Self::try_new_from_codes()`], or can be constructed with one of the
-    /// `new_<calendar>_datetime()` per-calendar methods (and then freely converted between calendars).
-    ///
-    /// ```rust
-    /// use icu::calendar::DateTime;
-    ///
-    /// // Example: Construction of ISO datetime from integers.
-    /// let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    ///     .expect("Failed to initialize ISO DateTime instance.");
-    ///
-    /// assert_eq!(datetime_iso.date.year().number, 1970);
-    /// assert_eq!(datetime_iso.date.month().ordinal, 1);
-    /// assert_eq!(datetime_iso.date.day_of_month().0, 2);
-    /// assert_eq!(datetime_iso.time.hour.number(), 13);
-    /// assert_eq!(datetime_iso.time.minute.number(), 1);
-    /// assert_eq!(datetime_iso.time.second.number(), 0);
-    /// ```
     #[derive(Debug)]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct DateTime<A: AsCalendar> {
-        /// The date
         pub date: Date<A>,
-        /// The time
         pub time: Time,
     }
 
     impl<A: AsCalendar> DateTime<A> {
-        /// Construct a [`DateTime`] for a given [`Date`] and [`Time`]
         pub fn new(date: Date<A>, time: Time) -> Self {
             DateTime { date, time }
         }
 
-        /// Construct a datetime from from era/month codes and fields,
-        /// and some calendar representation
         #[inline]
         pub fn try_new_from_codes(
             era: types::Era,
@@ -454,7 +300,6 @@ mod datetime {
             Ok(DateTime { date, time })
         }
 
-        /// Construct a DateTime from an ISO datetime and some calendar representation
         #[inline]
         pub fn new_from_iso(iso: DateTime<Iso>, calendar: A) -> Self {
             let date = Date::new_from_iso(iso.date, calendar);
@@ -464,7 +309,6 @@ mod datetime {
             }
         }
 
-        /// Convert the DateTime to an ISO DateTime
         #[inline]
         pub fn to_iso(&self) -> DateTime<Iso> {
             DateTime {
@@ -473,7 +317,6 @@ mod datetime {
             }
         }
 
-        /// Convert the DateTime to a DateTime in a different calendar
         #[inline]
         pub fn to_calendar<A2: AsCalendar>(&self, calendar: A2) -> DateTime<A2> {
             DateTime {
@@ -484,7 +327,6 @@ mod datetime {
     }
 
     impl<C: IntoAnyCalendar, A: AsCalendar<Calendar = C>> DateTime<A> {
-        /// Type-erase the date, converting it to a date for [`AnyCalendar`]
         pub fn to_any(&self) -> DateTime<AnyCalendar> {
             DateTime {
                 date: self.date.to_any(),
@@ -494,9 +336,6 @@ mod datetime {
     }
 
     impl<C: Calendar> DateTime<C> {
-        /// Wrap the calendar type in `Rc<T>`
-        ///
-        /// Useful when paired with [`Self::to_any()`] to obtain a `DateTime<Rc<AnyCalendar>>`
         pub fn wrap_calendar_in_rc(self) -> DateTime<Rc<C>> {
             DateTime {
                 date: self.date.wrap_calendar_in_rc(),
@@ -504,9 +343,6 @@ mod datetime {
             }
         }
 
-        /// Wrap the calendar type in `Arc<T>`
-        ///
-        /// Useful when paired with [`Self::to_any()`] to obtain a `DateTime<Rc<AnyCalendar>>`
         pub fn wrap_calendar_in_arc(self) -> DateTime<Arc<C>> {
             DateTime {
                 date: self.date.wrap_calendar_in_arc(),
@@ -526,7 +362,6 @@ mod datetime {
         }
     }
 
-    // We can do this since DateInner is required to be Eq by the Calendar trait
     impl<A: AsCalendar> Eq for DateTime<A> {}
 
     impl<A: AsCalendar + Clone> Clone for DateTime<A> {
@@ -547,11 +382,7 @@ mod datetime {
 }
 
 pub mod any_calendar {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! Module for working with multiple calendars at once
 
     use crate::buddhist::Buddhist;
     use crate::coptic::Coptic;
@@ -573,62 +404,12 @@ pub mod any_calendar {
 
     use core::fmt;
 
-    /// This is a calendar that encompasses all formattable calendars supported by this crate
-    ///
-    /// This allows for the construction of [`Date`] objects that have their calendar known at runtime.
-    ///
-    /// This can be constructed by calling `.into()` on a concrete calendar type if the calendar type is known at
-    /// compile time. When the type is known at runtime, the [`AnyCalendar::try_new_with_any_provider()`],
-    /// [`AnyCalendar::try_new_with_buffer_provider()`], and [`AnyCalendar::try_new_unstable()`] methods may be used.
-    ///
-    /// [`Date`](crate::Date) can also be converted to [`AnyCalendar`]-compatible ones
-    /// via [`Date::to_any()`](crate::Date::to_any()).
-    ///
-    /// There are many ways of constructing an AnyCalendar'd date:
-    /// ```
-    /// use icu::calendar::{AnyCalendar, AnyCalendarKind, DateTime, japanese::Japanese, types::Time};
-    /// use icu::locid::locale;
-    /// # use std::str::FromStr;
-    /// # use std::rc::Rc;
-    /// # use std::convert::TryInto;
-    ///
-    /// let locale = locale!("en-u-ca-japanese"); // English with the Japanese calendar
-    ///
-    /// let calendar = AnyCalendar::try_new_for_locale_unstable(&icu_testdata::unstable(), &locale.into())
-    ///                    .expect("constructing AnyCalendar failed");
-    /// let calendar = Rc::new(calendar); // Avoid cloning it each time
-    ///                                   // If everything is a local reference, you may use icu_calendar::Ref instead.
-    ///
-    /// // manually construct a datetime in this calendar
-    /// let manual_time = Time::try_new(12, 33, 12, 0).expect("failed to construct Time");
-    /// // construct from era code, year, month code, day, time, and a calendar
-    /// // This is March 28, 15 Heisei
-    /// let manual_datetime = DateTime::try_new_from_codes("heisei".parse().unwrap(), 15, "M03".parse().unwrap(), 28,
-    ///                                                manual_time, calendar.clone())
-    ///                     .expect("Failed to construct DateTime manually");
-    ///
-    ///
-    /// // construct another datetime by converting from ISO
-    /// let iso_datetime = DateTime::try_new_iso_datetime(2020, 9, 1, 12, 34, 28)
-    ///     .expect("Failed to construct ISO DateTime.");
-    /// let iso_converted = iso_datetime.to_calendar(calendar);
-    ///
-    /// // Construct a datetime in the appropriate typed calendar and convert
-    /// let japanese_calendar = Japanese::try_new_unstable(&icu_testdata::unstable()).unwrap();
-    /// let japanese_datetime = DateTime::try_new_japanese_datetime("heisei".parse().unwrap(), 15, 3, 28,
-    ///                                                         12, 33, 12, japanese_calendar).unwrap();
-    /// // This is a DateTime<AnyCalendar>
-    /// let any_japanese_datetime = japanese_datetime.to_any();
-    /// ```
     #[non_exhaustive]
     #[derive(Clone, Debug)]
     #[cfg_attr(all(test, feature = "serde"), derive(bolero::generator::TypeGenerator))]
     pub enum AnyCalendar {
-        /// A [`Gregorian`] calendar
         Gregorian(Gregorian),
-        /// A [`Buddhist`] calendar
         Buddhist(Buddhist),
-        /// A [`Japanese`] calendar
         Japanese(
             #[cfg_attr(
             all(test, feature = "serde"),
@@ -638,7 +419,6 @@ pub mod any_calendar {
         )]
             Japanese,
         ),
-        /// A [`JapaneseExtended`] calendar
         JapaneseExtended(
             #[cfg_attr(
             all(test, feature = "serde"),
@@ -648,35 +428,22 @@ pub mod any_calendar {
         )]
             JapaneseExtended,
         ),
-        /// An [`Ethiopian`] calendar
         Ethiopian(Ethiopian),
-        /// An [`Indian`] calendar
         Indian(Indian),
-        /// A [`Coptic`] calendar
         Coptic(Coptic),
-        /// An [`Iso`] calendar
         Iso(Iso),
     }
 
-    /// The inner date type for [`AnyCalendar`]
     #[derive(Clone, PartialEq, Eq, Debug)]
     #[non_exhaustive]
     pub enum AnyDateInner {
-        /// A date for a [`Gregorian`] calendar
         Gregorian(<Gregorian as Calendar>::DateInner),
-        /// A date for a [`Buddhist`] calendar
         Buddhist(<Buddhist as Calendar>::DateInner),
-        /// A date for a [`Japanese`] calendar
         Japanese(<Japanese as Calendar>::DateInner),
-        /// A date for a [`JapaneseExtended`] calendar
         JapaneseExtended(<JapaneseExtended as Calendar>::DateInner),
-        /// A date for an [`Ethiopian`] calendar
         Ethiopian(<Ethiopian as Calendar>::DateInner),
-        /// A date for an [`Indian`] calendar
         Indian(<Indian as Calendar>::DateInner),
-        /// A date for a [`Coptic`] calendar
         Coptic(<Coptic as Calendar>::DateInner),
-        /// A date for an [`Iso`] calendar
         Iso(<Iso as Calendar>::DateInner),
     }
 
@@ -807,7 +574,6 @@ pub mod any_calendar {
                 (Self::Iso(c), &mut AnyDateInner::Iso(ref mut d)) => {
                     c.offset_date(d, offset.cast_unit())
                 }
-                // This is only reached from misuse of from_raw, a semi-internal api
                 #[allow(clippy::panic)]
                 (_, d) => panic!(
                     "Found AnyCalendar with mixed calendar type {} and date type {}!",
@@ -886,7 +652,6 @@ pub mod any_calendar {
                     .until(d1, d2, c2, largest_unit, smallest_unit)
                     .cast_unit(),
                 _ => {
-                    // attempt to convert
                     let iso = calendar2.date_to_iso(date2);
 
                     match_cal_and_date!(match (self, date1):
@@ -900,22 +665,18 @@ pub mod any_calendar {
             }
         }
 
-        /// The calendar-specific year represented by `date`
         fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
             match_cal_and_date!(match (self, date): (c, d) => c.year(d))
         }
 
-        /// The calendar-specific month represented by `date`
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             match_cal_and_date!(match (self, date): (c, d) => c.month(d))
         }
 
-        /// The calendar-specific day-of-month represented by `date`
         fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
             match_cal_and_date!(match (self, date): (c, d) => c.day_of_month(d))
         }
 
-        /// Information of the day of the year
         fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
             match_cal_and_date!(match (self, date): (c, d) => c.day_of_year_info(d))
         }
@@ -939,14 +700,6 @@ pub mod any_calendar {
     }
 
     impl AnyCalendar {
-        /// Constructs an AnyCalendar for a given calendar kind and [`AnyProvider`] data source
-        ///
-        /// As this requires a valid [`AnyCalendarKind`] to work, it does not do any kind of locale-based
-        /// fallbacking. If this is desired, use [`Self::try_new_for_locale_with_any_provider()`].
-        ///
-        /// For calendars that need data, will attempt to load the appropriate data from the source.
-        ///
-        /// This API needs the `calendar/japanese@1` or `calendar/japanext@1` data key if working with Japanese calendars.
         pub fn try_new_with_any_provider<P>(
             provider: &P,
             kind: AnyCalendarKind,
@@ -975,16 +728,6 @@ pub mod any_calendar {
             })
         }
 
-        /// Constructs an AnyCalendar for a given calendar kind and [`BufferProvider`] data source
-        ///
-        /// As this requires a valid [`AnyCalendarKind`] to work, it does not do any kind of locale-based
-        /// fallbacking. If this is desired, use [`Self::try_new_for_locale_with_buffer_provider()`].
-        ///
-        /// For calendars that need data, will attempt to load the appropriate data from the source.
-        ///
-        /// This API needs the `calendar/japanese@1` or `calendar/japanext@1` data key if working with Japanese calendars.
-        ///
-        /// This needs the `"serde"` Cargo feature to be enabled to be used
         #[cfg(feature = "serde")]
         pub fn try_new_with_buffer_provider<P>(
             provider: &P,
@@ -1014,19 +757,6 @@ pub mod any_calendar {
             })
         }
 
-        /// Constructs an AnyCalendar for a given calendar kind and data source.
-        ///
-        /// **This method is unstable; the bounds on `P` might expand over time as more calendars are added**
-        ///
-        /// As this requires a valid [`AnyCalendarKind`] to work, it does not do any kind of locale-based
-        /// fallbacking. If this is desired, use [`Self::try_new_for_locale_unstable()`].
-        ///
-        /// For calendars that need data, will attempt to load the appropriate data from the source
-        ///
-        /// [📚 Help choosing a constructor](icu_provider::constructors)
-        /// <div class="stab unstable">
-        /// ⚠️ The bounds on this function may change over time, including in SemVer minor releases.
-        /// </div>
         pub fn try_new_unstable<P>(
             provider: &P,
             kind: AnyCalendarKind,
@@ -1068,14 +798,6 @@ pub mod any_calendar {
             ]
         );
 
-        /// Constructs an AnyCalendar for a given calendar kind and data source.
-        ///
-        /// **This method is unstable; the bounds on `P` might expand over time as more calendars are added**
-        ///
-        /// In case the locale's calendar is unknown or unspecified, it will attempt to load the default
-        /// calendar for the locale, falling back to gregorian.
-        ///
-        /// For calendars that need data, will attempt to load the appropriate data from the source
         pub fn try_new_for_locale_unstable<P>(
             provider: &P,
             locale: &DataLocale,
@@ -1102,7 +824,6 @@ pub mod any_calendar {
             }
         }
 
-        /// The [`AnyCalendarKind`] corresponding to the calendar this contains
         pub fn kind(&self) -> AnyCalendarKind {
             match *self {
                 Self::Gregorian(_) => AnyCalendarKind::Gregorian,
@@ -1119,8 +840,6 @@ pub mod any_calendar {
             }
         }
 
-        /// Given an AnyCalendar date, convert that date to another AnyCalendar date in this calendar,
-        /// if conversion is needed
         pub fn convert_any_date<'a>(
             &'a self,
             date: &Date<impl AsCalendar<Calendar = AnyCalendar>>,
@@ -1135,8 +854,6 @@ pub mod any_calendar {
             }
         }
 
-        /// Given an AnyCalendar datetime, convert that date to another AnyCalendar datetime in this calendar,
-        /// if conversion is needed
         pub fn convert_any_datetime<'a>(
             &'a self,
             date: &DateTime<impl AsCalendar<Calendar = AnyCalendar>>,
@@ -1163,42 +880,24 @@ pub mod any_calendar {
         }
     }
 
-    /// Convenient type for selecting the kind of AnyCalendar to construct
     #[non_exhaustive]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
     pub enum AnyCalendarKind {
-        /// The kind of a [`Gregorian`] calendar
         Gregorian,
-        /// The kind of a [`Buddhist`] calendar
         Buddhist,
-        /// The kind of a [`Japanese`] calendar
         Japanese,
-        /// The kind of a [`JapaneseExtended`] calendar
         JapaneseExtended,
-        /// The kind of an [`Ethiopian`] calendar, with Amete Mihret era
         Ethiopian,
-        /// The kind of an [`Ethiopian`] calendar, with Amete Alem era
         EthiopianAmeteAlem,
-        /// The kind of a [`Indian`] calendar
         Indian,
-        /// The kind of a [`Coptic`] calendar
         Coptic,
-        /// The kind of an [`Iso`] calendar
         Iso,
     }
 
     impl AnyCalendarKind {
-        /// Construct from a BCP-47 string
-        ///
-        /// Returns None if the calendar is unknown. If you prefer an error, use
-        /// [`CalendarError::unknown_any_calendar_kind`].
         pub fn get_for_bcp47_string(x: &str) -> Option<Self> {
             Self::get_for_bcp47_bytes(x.as_bytes())
         }
-        /// Construct from a BCP-47 byte string
-        ///
-        /// Returns None if the calendar is unknown. If you prefer an error, use
-        /// [`CalendarError::unknown_any_calendar_kind`].
         pub fn get_for_bcp47_bytes(x: &[u8]) -> Option<Self> {
             Some(match x {
                 b"gregory" => AnyCalendarKind::Gregorian,
@@ -1213,10 +912,6 @@ pub mod any_calendar {
                 _ => return None,
             })
         }
-        /// Construct from a BCP-47 [`Value`]
-        ///
-        /// Returns None if the calendar is unknown. If you prefer an error, use
-        /// [`CalendarError::unknown_any_calendar_kind`].
         pub fn get_for_bcp47_value(x: &Value) -> Option<Self> {
             Some(if *x == value!("gregory") {
                 AnyCalendarKind::Gregorian
@@ -1241,7 +936,6 @@ pub mod any_calendar {
             })
         }
 
-        /// Convert to a BCP-47 string
         pub fn as_bcp47_string(self) -> &'static str {
             match self {
                 AnyCalendarKind::Gregorian => "gregory",
@@ -1256,7 +950,6 @@ pub mod any_calendar {
             }
         }
 
-        /// Convert to a BCP-47 `Value`
         pub fn as_bcp47_value(self) -> Value {
             match self {
                 AnyCalendarKind::Gregorian => value!("gregory"),
@@ -1271,10 +964,6 @@ pub mod any_calendar {
             }
         }
 
-        /// Extract the calendar component from a [`Locale`]
-        ///
-        /// Returns None if the calendar is not specified or unknown. If you prefer an error, use
-        /// [`CalendarError::unknown_any_calendar_kind`].
         pub fn get_for_locale(l: &Locale) -> Option<Self> {
             l.extensions
                 .unicode
@@ -1283,17 +972,11 @@ pub mod any_calendar {
                 .and_then(Self::get_for_bcp47_value)
         }
 
-        /// Extract the calendar component from a [`DataLocale`]
-        ///
-        /// Returns None if the calendar is not specified or unknown. If you prefer an error, use
-        /// [`CalendarError::unknown_any_calendar_kind`].
         fn get_for_data_locale(l: &DataLocale) -> Option<Self> {
             l.get_unicode_ext(&key!("ca"))
                 .and_then(|v| Self::get_for_bcp47_value(&v))
         }
 
-        // Do not make public, this will eventually need fallback
-        // data from the provider
         fn from_data_locale_with_fallback(l: &DataLocale) -> Self {
             if let Some(kind) = Self::get_for_data_locale(l) {
                 kind
@@ -1301,11 +984,6 @@ pub mod any_calendar {
                 let lang = l.language();
                 if lang == language!("th") {
                     Self::Buddhist
-                // Other known fallback routes for currently-unsupported calendars
-                // } else if lang == language!("sa") {
-                //     Self::IslamicUmalqura
-                // } else if lang == language!("af") || lang == language!("ir") {
-                //     Self::Persian
                 } else {
                     Self::Gregorian
                 }
@@ -1325,20 +1003,10 @@ pub mod any_calendar {
         }
     }
 
-    /// Trait for calendars that may be converted to [`AnyCalendar`]
     pub trait IntoAnyCalendar: Calendar + Sized {
-        /// Convert this calendar into an [`AnyCalendar`], moving it
-        ///
-        /// You should not need to call this method directly
         fn to_any(self) -> AnyCalendar;
 
-        /// Convert this calendar into an [`AnyCalendar`], cloning it
-        ///
-        /// You should not need to call this method directly
         fn to_any_cloned(&self) -> AnyCalendar;
-        /// Convert a date for this calendar into an [`AnyDateInner`]
-        ///
-        /// You should not need to call this method directly
         fn date_to_any(&self, d: &Self::DateInner) -> AnyDateInner;
     }
 
@@ -1391,7 +1059,6 @@ pub mod any_calendar {
     }
 
     impl IntoAnyCalendar for Ethiopian {
-        // Amete Mihret calendars are the default
         fn to_any(self) -> AnyCalendar {
             AnyCalendar::Ethiopian(self)
         }
@@ -1579,8 +1246,6 @@ pub mod any_calendar {
 
             single_test_roundtrip(coptic, "ad", 100, "M03", 1);
             single_test_roundtrip(coptic, "ad", 2000, "M03", 1);
-            // fails ISO roundtrip
-            // single_test_roundtrip(coptic, "bd", 100, "M03", 1);
             single_test_roundtrip(coptic, "ad", 100, "M13", 1);
             single_test_error(
                 coptic,
@@ -1596,8 +1261,6 @@ pub mod any_calendar {
             single_test_roundtrip(ethiopian, "incar", 100, "M03", 1);
             single_test_roundtrip(ethiopian, "incar", 2000, "M03", 1);
             single_test_roundtrip(ethiopian, "incar", 2000, "M13", 1);
-            // Fails ISO roundtrip due to https://github.com/unicode-org/icu4x/issues/2254
-            // single_test_roundtrip(ethiopian, "pre-incar", 100, "M03", 1);
             single_test_error(ethiopian, "incar", 0, "M03", 1, CalendarError::OutOfRange);
             single_test_error(
                 ethiopian,
@@ -1618,8 +1281,6 @@ pub mod any_calendar {
 
             single_test_roundtrip(ethioaa, "mundi", 7000, "M13", 1);
             single_test_roundtrip(ethioaa, "mundi", 7000, "M13", 1);
-            // Fails ISO roundtrip due to https://github.com/unicode-org/icu4x/issues/2254
-            // single_test_roundtrip(ethioaa, "mundi", 100, "M03", 1);
             single_test_error(
                 ethiopian,
                 "mundi",
@@ -1700,38 +1361,7 @@ pub mod any_calendar {
     }
 }
 pub mod buddhist {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains types and implementations for the Buddhist calendar.
-    //!
-    //! ```rust
-    //! use icu::calendar::{buddhist::Buddhist, Date, DateTime};
-    //!
-    //! // `Date` type
-    //! let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    //!     .expect("Failed to initialize ISO Date instance.");
-    //! let date_buddhist = Date::new_from_iso(date_iso, Buddhist);
-    //!
-    //! // `DateTime` type
-    //! let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    //!     .expect("Failed to initialize ISO DateTime instance.");
-    //! let datetime_buddhist = DateTime::new_from_iso(datetime_iso, Buddhist);
-    //!
-    //! // `Date` checks
-    //! assert_eq!(date_buddhist.year().number, 2513);
-    //! assert_eq!(date_buddhist.month().ordinal, 1);
-    //! assert_eq!(date_buddhist.day_of_month().0, 2);
-    //!
-    //! // `DateTime` type
-    //! assert_eq!(datetime_buddhist.date.year().number, 2513);
-    //! assert_eq!(datetime_buddhist.date.month().ordinal, 1);
-    //! assert_eq!(datetime_buddhist.date.day_of_month().0, 2);
-    //! assert_eq!(datetime_buddhist.time.hour.number(), 13);
-    //! assert_eq!(datetime_buddhist.time.minute.number(), 1);
-    //! assert_eq!(datetime_buddhist.time.second.number(), 0);
-    //! ```
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::calendar_arithmetic::ArithmeticDate;
@@ -1739,25 +1369,9 @@ pub mod buddhist {
     use crate::{types, Calendar, CalendarError, Date, DateDuration, DateDurationUnit, DateTime};
     use tinystr::tinystr;
 
-    /// The number of years the Buddhist Era is ahead of C.E. by
-    ///
-    /// (1 AD = 544 BE)
     const BUDDHIST_ERA_OFFSET: i32 = 543;
 
     #[derive(Copy, Clone, Debug, Default)]
-    /// The [Thai Solar Buddhist Calendar][cal]
-    ///
-    /// The [Thai Solar Buddhist Calendar][cal] is a solar calendar used in Thailand, with twelve months.
-    /// The months and days are identical to that of the Gregorian calendar, however the years are counted
-    /// differently using the Buddhist Era.
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// [cal]: https://en.wikipedia.org/wiki/Thai_solar_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar supports one era, `"be"`, with 1 B.E. being 543 BCE
 
     #[allow(clippy::exhaustive_structs)] // this type is stable
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
@@ -1817,22 +1431,18 @@ pub mod buddhist {
                 .cast_unit()
         }
 
-        /// The calendar-specific year represented by `date`
         fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
             iso_year_as_buddhist(date.0.year)
         }
 
-        /// The calendar-specific month represented by `date`
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             Iso.month(date)
         }
 
-        /// The calendar-specific day-of-month represented by `date`
         fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
             Iso.day_of_month(date)
         }
 
-        /// Information of the day of the year
         fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
             let prev_year = date.0.year - 1;
             let next_year = date.0.year + 1;
@@ -1855,21 +1465,6 @@ pub mod buddhist {
     }
 
     impl Date<Buddhist> {
-        /// Construct a new Buddhist Date.
-        ///
-        /// Years are specified as BE years.
-        ///
-        /// ```rust
-        /// use icu::calendar::Date;
-        /// use std::convert::TryFrom;
-        ///
-        /// let date_buddhist = Date::try_new_buddhist_date(1970, 1, 2)
-        ///     .expect("Failed to initialize Buddhist Date instance.");
-        ///
-        /// assert_eq!(date_buddhist.year().number, 1970);
-        /// assert_eq!(date_buddhist.month().ordinal, 1);
-        /// assert_eq!(date_buddhist.day_of_month().0, 2);
-        /// ```
         pub fn try_new_buddhist_date(
             year: i32,
             month: u8,
@@ -1881,24 +1476,6 @@ pub mod buddhist {
     }
 
     impl DateTime<Buddhist> {
-        /// Construct a new Buddhist datetime from integers.
-        ///
-        /// Years are specified as BE years.
-        ///
-        /// ```rust
-        /// use icu::calendar::DateTime;
-        ///
-        /// let datetime_buddhist =
-        ///     DateTime::try_new_buddhist_datetime(1970, 1, 2, 13, 1, 0)
-        ///         .expect("Failed to initialize Buddhist DateTime instance.");
-        ///
-        /// assert_eq!(datetime_buddhist.date.year().number, 1970);
-        /// assert_eq!(datetime_buddhist.date.month().ordinal, 1);
-        /// assert_eq!(datetime_buddhist.date.day_of_month().0, 2);
-        /// assert_eq!(datetime_buddhist.time.hour.number(), 13);
-        /// assert_eq!(datetime_buddhist.time.minute.number(), 1);
-        /// assert_eq!(datetime_buddhist.time.second.number(), 0);
-        /// ```
         pub fn try_new_buddhist_datetime(
             year: i32,
             month: u8,
@@ -1924,28 +1501,13 @@ pub mod buddhist {
     }
 }
 mod calendar {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::{types, CalendarError, Date, DateDuration, DateDurationUnit, Iso};
     use core::fmt;
 
-    /// A calendar implementation
-    ///
-    /// Only implementors of [`Calendar`] should care about these methods, in general users of
-    /// these calendars should use the methods on [`Date`] instead.
-    ///
-    /// Individual [`Calendar`] implementations may have inherent utility methods
-    /// allowing for direct construction, etc.
-    ///
-    /// For ICU4X 1.0, implementing this trait or calling methods directly is considered
-    /// unstable and prone to change, especially for `offset_date()` and `until()`.
     pub trait Calendar {
-        /// The internal type used to represent dates
         type DateInner: PartialEq + Eq + Clone + fmt::Debug;
-        /// Construct a date from era/month codes and fields
         fn date_from_codes(
             &self,
             era: types::Era,
@@ -1953,38 +1515,20 @@ mod calendar {
             month_code: types::MonthCode,
             day: u8,
         ) -> Result<Self::DateInner, CalendarError>;
-        /// Construct the date from an ISO date
         fn date_from_iso(&self, iso: Date<Iso>) -> Self::DateInner;
-        /// Obtain an ISO date from this date
         fn date_to_iso(&self, date: &Self::DateInner) -> Date<Iso>;
-        // fn validate_date(&self, e: Era, y: Year, m: MonthCode, d: Day) -> bool;
-        // // similar validators for YearMonth, etc
 
-        // fn is_leap<A: AsCalendar<Calendar = Self>>(&self, date: &Date<A>) -> bool;
-        /// Count the number of months in a given year, specified by providing a date
-        /// from that year
         fn months_in_year(&self, date: &Self::DateInner) -> u8;
-        /// Count the number of days in a given year, specified by providing a date
-        /// from that year
         fn days_in_year(&self, date: &Self::DateInner) -> u32;
-        /// Count the number of days in a given month, specified by providing a date
-        /// from that year/month
         fn days_in_month(&self, date: &Self::DateInner) -> u8;
-        /// Calculate the day of the week and return it
         fn day_of_week(&self, date: &Self::DateInner) -> types::IsoWeekday {
             self.date_to_iso(date).day_of_week()
         }
-        // fn week_of_year(&self, date: &Self::DateInner) -> u8;
 
         #[doc(hidden)] // unstable
-        /// Add `offset` to `date`
         fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>);
 
         #[doc(hidden)] // unstable
-        /// Calculate `date2 - date` as a duration
-        ///
-        /// `calendar2` is the calendar object associated with `date2`. In case the specific calendar objects
-        /// differ on data, the data for the first calendar is used, and `date2` may be converted if necessary.
         fn until(
             &self,
             date1: &Self::DateInner,
@@ -1994,33 +1538,22 @@ mod calendar {
             smallest_unit: DateDurationUnit,
         ) -> DateDuration<Self>;
 
-        /// Obtain a name for the calendar for debug printing
         fn debug_name(&self) -> &'static str;
-        // fn since(&self, from: &Date<Self>, to: &Date<Self>) -> Duration<Self>, Error;
 
-        /// The calendar-specific year represented by `date`
         fn year(&self, date: &Self::DateInner) -> types::FormattableYear;
 
-        /// The calendar-specific month represented by `date`
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth;
 
-        /// The calendar-specific day-of-month represented by `date`
         fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth;
 
-        /// Information of the day of the year
         fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo;
 
-        /// The [`AnyCalendarKind`] corresponding to this calendar,
-        /// if one exists. Implementors outside of icu_calendar should return None
         fn any_calendar_kind(&self) -> Option<AnyCalendarKind> {
             None
         }
     }
 }
 mod calendar_arithmetic {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
     use crate::{types, Calendar, CalendarError, DateDuration, DateDurationUnit};
     use core::convert::TryInto;
@@ -2031,9 +1564,7 @@ mod calendar_arithmetic {
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct ArithmeticDate<C: CalendarArithmetic> {
         pub year: i32,
-        /// 1-based month of year
         pub month: u8,
-        /// 1-based day of month
         pub day: u8,
         pub marker: PhantomData<C>,
     }
@@ -2043,12 +1574,6 @@ mod calendar_arithmetic {
         fn months_for_every_year(year: i32) -> u8;
         fn is_leap_year(year: i32) -> bool;
 
-        /// Calculate the days in a given year
-        /// Can be overridden with simpler implementations for solar calendars
-        /// (typically, 366 in leap, 365 otgerwuse) Leave this as the default
-        /// for lunar calendars
-        ///
-        /// The name has `provided` in it to avoid clashes with Calendar
         fn days_in_provided_year(year: i32) -> u32 {
             let months_in_year = Self::months_for_every_year(year);
             let mut days: u32 = 0;
@@ -2106,7 +1631,6 @@ mod calendar_arithmetic {
 
         #[inline]
         pub fn offset_date(&mut self, offset: DateDuration<C>) {
-            // For offset_date to work with lunar calendars, need to handle an edge case where the original month is not valid in the future year.
             self.year += offset.years;
 
             self.offset_months(offset.months);
@@ -2171,7 +1695,6 @@ mod calendar_arithmetic {
 
             debug_assert!(day <= C::month_days(year, month) as i32);
             #[allow(clippy::unwrap_used)]
-            // The day is expected to be within the range of month_days of C
             ArithmeticDate {
                 year,
                 month,
@@ -2185,12 +1708,6 @@ mod calendar_arithmetic {
             types::DayOfMonth(self.day.into())
         }
 
-        /// The [`types::FormattableMonth`] for the current month (with month code) for a solar calendar
-        /// Lunar calendars should not use this method and instead manually implement a month code
-        /// resolver.
-        ///
-        /// Returns "und" if run with months that are out of bounds for the current
-        /// calendar.
         #[inline]
         pub fn solar_month(&self) -> types::FormattableMonth {
             let code = match self.month {
@@ -2216,11 +1733,7 @@ mod calendar_arithmetic {
             }
         }
 
-        /// Construct a new arithmetic date from a year, month code, and day, bounds checking
-        /// the month
         pub fn new_from_solar<C2: Calendar>(
-            // Separate type since the debug_name() impl may differ when DateInner types
-            // are nested (e.g. in GregorianDateInner)
             cal: &C2,
             year: i32,
             month_code: types::MonthCode,
@@ -2250,10 +1763,7 @@ mod calendar_arithmetic {
         }
     }
 
-    /// For solar calendars, get the month number from the month code
     pub fn ordinal_solar_month_from_code(code: types::MonthCode) -> Option<u8> {
-        // Match statements on tinystrs are annoying so instead
-        // we calculate it from the bytes directly
         if code.0.len() != 3 {
             return None;
         }
@@ -2272,38 +1782,7 @@ mod calendar_arithmetic {
     }
 }
 pub mod coptic {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains types and implementations for the Coptic calendar.
-    //!
-    //! ```rust
-    //! use icu::calendar::{coptic::Coptic, Date, DateTime};
-    //!
-    //! // `Date` type
-    //! let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    //!     .expect("Failed to initialize ISO Date instance.");
-    //! let date_coptic = Date::new_from_iso(date_iso, Coptic);
-    //!
-    //! // `DateTime` type
-    //! let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    //!     .expect("Failed to initialize ISO DateTime instance.");
-    //! let datetime_coptic = DateTime::new_from_iso(datetime_iso, Coptic);
-    //!
-    //! // `Date` checks
-    //! assert_eq!(date_coptic.year().number, 1686);
-    //! assert_eq!(date_coptic.month().ordinal, 4);
-    //! assert_eq!(date_coptic.day_of_month().0, 24);
-    //!
-    //! // `DateTime` type
-    //! assert_eq!(datetime_coptic.date.year().number, 1686);
-    //! assert_eq!(datetime_coptic.date.month().ordinal, 4);
-    //! assert_eq!(datetime_coptic.date.day_of_month().0, 24);
-    //! assert_eq!(datetime_coptic.time.hour.number(), 13);
-    //! assert_eq!(datetime_coptic.time.minute.number(), 1);
-    //! assert_eq!(datetime_coptic.time.second.number(), 0);
-    //! ```
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::calendar_arithmetic::{ArithmeticDate, CalendarArithmetic};
@@ -2314,25 +1793,11 @@ pub mod coptic {
     use core::marker::PhantomData;
     use tinystr::tinystr;
 
-    /// The [Coptic Calendar]
-    ///
-    /// The [Coptic calendar] is a solar calendar used by the Coptic Orthodox Church, with twelve normal months
-    /// and a thirteenth small epagomenal month.
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// [Coptic calendar]: https://en.wikipedia.org/wiki/Coptic_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar supports two era codes: `"bd"`, and `"ad"`, corresponding to the Before Diocletian and After Diocletian/Anno Martyrum
-    /// eras. 1 A.M. is equivalent to 284 C.E.
     #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct Coptic;
 
-    /// The inner date type used for representing [`Date`]s of [`Coptic`]. See [`Date`] and [`Coptic`] for more details.
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
     pub struct CopticDateInner(pub(crate) ArithmeticDate<Coptic>);
 
@@ -2471,11 +1936,6 @@ pub mod coptic {
     pub(crate) const COPTIC_EPOCH: i32 = Julian::fixed_from_julian_integers(284, 8, 29);
 
     impl Coptic {
-        // "Fixed" is a day count representation of calendars staring from Jan 1st of year 1 of the Georgian Calendar.
-        // The fixed date algorithms are from
-        // Dershowitz, Nachum, and Edward M. Reingold. _Calendrical calculations_. Cambridge University Press, 2008.
-        //
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L1978
         fn fixed_from_coptic(date: ArithmeticDate<Coptic>) -> i32 {
             COPTIC_EPOCH - 1
                 + 365 * (date.year - 1)
@@ -2493,7 +1953,6 @@ pub mod coptic {
             })
         }
 
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L1990
         pub(crate) fn coptic_from_fixed(date: i32) -> CopticDateInner {
             let year = quotient(4 * (date - COPTIC_EPOCH) + 1463, 1461);
             let month =
@@ -2514,20 +1973,6 @@ pub mod coptic {
     }
 
     impl Date<Coptic> {
-        /// Construct new Coptic Date.
-        ///
-        /// Negative years are in the B.D. era, starting with 0 = 1 B.D.
-        ///
-        /// ```rust
-        /// use icu::calendar::Date;
-        ///
-        /// let date_coptic = Date::try_new_coptic_date(1686, 5, 6)
-        ///     .expect("Failed to initialize Coptic Date instance.");
-        ///
-        /// assert_eq!(date_coptic.year().number, 1686);
-        /// assert_eq!(date_coptic.month().ordinal, 5);
-        /// assert_eq!(date_coptic.day_of_month().0, 6);
-        /// ```
         pub fn try_new_coptic_date(
             year: i32,
             month: u8,
@@ -2550,24 +1995,6 @@ pub mod coptic {
     }
 
     impl DateTime<Coptic> {
-        /// Construct a new Coptic datetime from integers.
-        ///
-        /// Negative years are in the B.D. era, starting with 0 = 1 B.D.
-        ///
-        /// ```rust
-        /// use icu::calendar::DateTime;
-        ///
-        /// let datetime_coptic =
-        ///     DateTime::try_new_coptic_datetime(1686, 5, 6, 13, 1, 0)
-        ///         .expect("Failed to initialize Coptic DateTime instance.");
-        ///
-        /// assert_eq!(datetime_coptic.date.year().number, 1686);
-        /// assert_eq!(datetime_coptic.date.month().ordinal, 5);
-        /// assert_eq!(datetime_coptic.date.day_of_month().0, 6);
-        /// assert_eq!(datetime_coptic.time.hour.number(), 13);
-        /// assert_eq!(datetime_coptic.time.minute.number(), 1);
-        /// assert_eq!(datetime_coptic.time.second.number(), 0);
-        /// ```
         pub fn try_new_coptic_datetime(
             year: i32,
             month: u8,
@@ -2604,7 +2031,6 @@ pub mod coptic {
         use super::*;
         #[test]
         fn test_coptic_regression() {
-            // https://github.com/unicode-org/icu4x/issues/2254
             let iso_date = Date::try_new_iso_date(-100, 3, 3).unwrap();
             let coptic = iso_date.to_calendar(Coptic);
             let recovered_iso = coptic.to_iso();
@@ -2613,97 +2039,27 @@ pub mod coptic {
     }
 }
 mod duration {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
     use crate::Calendar;
     use core::fmt;
     use core::marker::PhantomData;
 
-    /// A duration between two dates
-    ///
-    /// Can be used to perform date arithmetic
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use icu_calendar::{
-    ///     types::IsoWeekday, Date, DateDuration, DateDurationUnit,
-    /// };
-    ///
-    /// // Creating ISO date: 1992-09-02.
-    /// let mut date_iso = Date::try_new_iso_date(1992, 9, 2)
-    ///     .expect("Failed to initialize ISO Date instance.");
-    ///
-    /// assert_eq!(date_iso.day_of_week(), IsoWeekday::Wednesday);
-    /// assert_eq!(date_iso.year().number, 1992);
-    /// assert_eq!(date_iso.month().ordinal, 9);
-    /// assert_eq!(date_iso.day_of_month().0, 2);
-    ///
-    /// // Answering questions about days in month and year.
-    /// assert_eq!(date_iso.days_in_year(), 366);
-    /// assert_eq!(date_iso.days_in_month(), 30);
-    ///
-    /// // Advancing date in-place by 1 year, 2 months, 3 weeks, 4 days.
-    /// date_iso.add(DateDuration::new(1, 2, 3, 4));
-    /// assert_eq!(date_iso.year().number, 1993);
-    /// assert_eq!(date_iso.month().ordinal, 11);
-    /// assert_eq!(date_iso.day_of_month().0, 27);
-    ///
-    /// // Reverse date advancement.
-    /// date_iso.add(DateDuration::new(-1, -2, -3, -4));
-    /// assert_eq!(date_iso.year().number, 1992);
-    /// assert_eq!(date_iso.month().ordinal, 9);
-    /// assert_eq!(date_iso.day_of_month().0, 2);
-    ///
-    /// // Creating ISO date: 2022-01-30.
-    /// let newer_date_iso = Date::try_new_iso_date(2022, 1, 30)
-    ///     .expect("Failed to initialize ISO Date instance.");
-    ///
-    /// // Comparing dates: 2022-01-30 and 1992-09-02.
-    /// let duration = newer_date_iso.until(
-    ///     &date_iso,
-    ///     DateDurationUnit::Years,
-    ///     DateDurationUnit::Days,
-    /// );
-    /// assert_eq!(duration.years, 30);
-    /// assert_eq!(duration.months, -8);
-    /// assert_eq!(duration.days, 28);
-    ///
-    /// // Create new date with date advancement. Reassign to new variable.
-    /// let mutated_date_iso = date_iso.added(DateDuration::new(1, 2, 3, 4));
-    /// assert_eq!(mutated_date_iso.year().number, 1993);
-    /// assert_eq!(mutated_date_iso.month().ordinal, 11);
-    /// assert_eq!(mutated_date_iso.day_of_month().0, 27);
-    /// ```
     #[derive(Copy, Clone, Eq, PartialEq)]
     #[allow(clippy::exhaustive_structs)] // this type should be stable (and is intended to be constructed manually)
     pub struct DateDuration<C: Calendar + ?Sized> {
-        /// The number of years
         pub years: i32,
-        /// The number of months
         pub months: i32,
-        /// The number of weeks
         pub weeks: i32,
-        /// The number of days
         pub days: i32,
-        /// A marker for the calendar
         pub marker: PhantomData<C>,
     }
 
-    /// A "duration unit" used to specify the minimum or maximum duration of time to
-    /// care about
     #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     #[allow(clippy::exhaustive_enums)] // this type should be stable
     pub enum DateDurationUnit {
-        /// Duration in years
         Years,
-        /// Duration in months
         Months,
-        /// Duration in weeks
         Weeks,
-        /// Duration in days
         Days,
     }
 
@@ -2720,13 +2076,6 @@ mod duration {
     }
 
     impl<C: Calendar + ?Sized> DateDuration<C> {
-        /// Construct a DateDuration
-        ///
-        /// ```rust
-        /// # use icu_calendar::*;
-        /// // two years, three months, and five days
-        /// let duration: DateDuration<Iso> = DateDuration::new(2, 3, 0, 5);
-        /// ```
         pub fn new(years: i32, months: i32, weeks: i32, days: i32) -> Self {
             DateDuration {
                 years,
@@ -2737,7 +2086,6 @@ mod duration {
             }
         }
 
-        /// Explicitly cast duration to one for a different calendar
         pub fn cast_unit<C2: Calendar + ?Sized>(self) -> DateDuration<C2> {
             DateDuration {
                 years: self.years,
@@ -2761,9 +2109,6 @@ mod duration {
     }
 }
 mod error {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
     use displaydoc::Display;
     use icu_provider::DataError;
@@ -2773,50 +2118,33 @@ mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for CalendarError {}
 
-    /// A list of error outcomes for various operations in the `icu_calendar` crate.
-    ///
-    /// Re-exported as [`Error`](crate::Error).
     #[derive(Display, Debug, Copy, Clone, PartialEq)]
     #[non_exhaustive]
     pub enum CalendarError {
-        /// An input could not be parsed.
         #[displaydoc("Could not parse as integer")]
         Parse,
-        /// An input overflowed its range.
         #[displaydoc("{field} must be between 0-{max}")]
         Overflow {
-            /// The name of the field
             field: &'static str,
-            /// The maximum value
             max: usize,
         },
         #[displaydoc("{field} must be between {min}-0")]
-        /// An input underflowed its range.
         Underflow {
-            /// The name of the field
             field: &'static str,
-            /// The minimum value
             min: isize,
         },
-        /// Out of range
-        // TODO(Manishearth) turn this into a proper variant
+        /// Foo
         OutOfRange,
-        /// Unknown era
         #[displaydoc("No era named {0} for calendar {1}")]
         UnknownEra(TinyStr16, &'static str),
-        /// Unknown month code for a given calendar
         #[displaydoc("No month code named {0} for calendar {1}")]
         UnknownMonthCode(TinyStr4, &'static str),
-        /// Missing required input field for formatting
         #[displaydoc("No value for {0}")]
         MissingInput(&'static str),
-        /// No support for a given calendar in AnyCalendar
         #[displaydoc("AnyCalendar does not support calendar {0}")]
         UnknownAnyCalendarKind(TinyStr16),
-        /// An operation required a calendar but a calendar was not provided.
         #[displaydoc("An operation required a calendar but a calendar was not provided")]
         MissingCalendar,
-        /// An error originating inside of the [data provider](icu_provider).
         #[displaydoc("{0}")]
         Data(DataError),
     }
@@ -2834,22 +2162,6 @@ mod error {
     }
 
     impl CalendarError {
-        /// Create an error when an [`AnyCalendarKind`] is expected but not available.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use icu_calendar::AnyCalendarKind;
-        /// use icu_calendar::CalendarError;
-        ///
-        /// let cal_str = "maori";
-        ///
-        /// AnyCalendarKind::get_for_bcp47_string(cal_str)
-        ///     .ok_or_else(|| CalendarError::unknown_any_calendar_kind(cal_str))
-        ///     .expect_err("Māori calendar is not yet supported");
-        /// ```
-        ///
-        /// [`AnyCalendarKind`]: crate::AnyCalendarKind
         pub fn unknown_any_calendar_kind(description: impl Writeable) -> Self {
             let tiny = description
                 .write_to_string()
@@ -2861,39 +2173,7 @@ mod error {
     }
 }
 pub mod ethiopian {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains types and implementations for the Ethiopian calendar.
-    //!
-    //! ```rust
-    //! use icu::calendar::{ethiopian::Ethiopian, Date, DateTime};
-    //!
-    //! // `Date` type
-    //! let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    //!     .expect("Failed to initialize ISO Date instance.");
-    //! let date_ethiopian = Date::new_from_iso(date_iso, Ethiopian::new());
-    //!
-    //! // `DateTime` type
-    //! let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    //!     .expect("Failed to initialize ISO DateTime instance.");
-    //! let datetime_ethiopian =
-    //!     DateTime::new_from_iso(datetime_iso, Ethiopian::new());
-    //!
-    //! // `Date` checks
-    //! assert_eq!(date_ethiopian.year().number, 1962);
-    //! assert_eq!(date_ethiopian.month().ordinal, 4);
-    //! assert_eq!(date_ethiopian.day_of_month().0, 24);
-    //!
-    //! // `DateTime` type
-    //! assert_eq!(datetime_ethiopian.date.year().number, 1962);
-    //! assert_eq!(datetime_ethiopian.date.month().ordinal, 4);
-    //! assert_eq!(datetime_ethiopian.date.day_of_month().0, 24);
-    //! assert_eq!(datetime_ethiopian.time.hour.number(), 13);
-    //! assert_eq!(datetime_ethiopian.time.minute.number(), 1);
-    //! assert_eq!(datetime_ethiopian.time.second.number(), 0);
-    //! ```
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::calendar_arithmetic::{ArithmeticDate, CalendarArithmetic};
@@ -2904,44 +2184,19 @@ pub mod ethiopian {
     use core::marker::PhantomData;
     use tinystr::tinystr;
 
-    /// The number of years the Amete Alem epoch precedes the Amete Mihret epoch
     const AMETE_ALEM_OFFSET: i32 = 5500;
 
-    /// Which era style the ethiopian calendar uses
     #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
     #[non_exhaustive]
     pub enum EthiopianEraStyle {
-        /// Use an era scheme of pre- and post- Incarnation eras,
-        /// anchored at the date of the Incarnation of Jesus in this calendar
         AmeteMihret,
-        /// Use an era scheme of the Anno Mundi era, anchored at the date of Creation
-        /// in this calendar
         AmeteAlem,
     }
 
-    /// The [Ethiopian Calendar]
-    ///
-    /// The [Ethiopian calendar] is a solar calendar used by the Coptic Orthodox Church, with twelve normal months
-    /// and a thirteenth small epagomenal month.
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// It can be constructed in two modes: using the Amete Alem era scheme, or the Amete Mihret era scheme (the default),
-    /// see [`EthiopianEraStyle`] for more info.
-    ///
-    /// [Ethiopian calendar]: https://en.wikipedia.org/wiki/Ethiopian_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar supports three era codes, based on what mode it is in. In the Amete Mihret scheme it has
-    /// the `"incar"` and `"pre-incar"` eras, 1 Incarnation is 9 CE. In the Amete Alem scheme, it instead has a single era,
-    /// `"mundi`, where 1 Anno Mundi is 5493 BCE. Dates before that use negative year numbers.
-    // The bool specifies whether dates should be in the Amete Alem era scheme
     #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
     pub struct Ethiopian(pub(crate) bool);
 
-    /// The inner date type used for representing [`Date`]s of [`Ethiopian`]. See [`Date`] and [`Ethiopian`] for more details.
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
     pub struct EthiopianDateInner(ArithmeticDate<Ethiopian>);
 
@@ -3087,20 +2342,16 @@ pub mod ethiopian {
         super::coptic::COPTIC_EPOCH - Julian::fixed_from_julian_integers(8, 8, 29);
 
     impl Ethiopian {
-        /// Construct a new Ethiopian Calendar for the Amete Mihret era naming scheme
         pub fn new() -> Self {
             Self(false)
         }
-        /// Construct a new Ethiopian Calendar with a value specifying whether or not it is Amete Alem
         pub fn new_with_era_style(era_style: EthiopianEraStyle) -> Self {
             Self(era_style == EthiopianEraStyle::AmeteAlem)
         }
-        /// Set whether or not this uses the Amete Alem era scheme
         pub fn set_era_style(&mut self, era_style: EthiopianEraStyle) {
             self.0 = era_style == EthiopianEraStyle::AmeteAlem
         }
 
-        /// Returns whether this has the Amete Alem era
         pub fn era_style(&self) -> EthiopianEraStyle {
             if self.0 {
                 EthiopianEraStyle::AmeteAlem
@@ -3109,22 +2360,15 @@ pub mod ethiopian {
             }
         }
 
-        // "Fixed" is a day count representation of calendars staring from Jan 1st of year 1 of the Georgian Calendar.
-        // The fixed date algorithms are from
-        // Dershowitz, Nachum, and Edward M. Reingold. _Calendrical calculations_. Cambridge University Press, 2008.
-        //
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L2017
         fn fixed_from_ethiopian(date: ArithmeticDate<Ethiopian>) -> i32 {
             Coptic::fixed_from_coptic_integers(date.year, date.month, date.day)
                 - ETHIOPIC_TO_COPTIC_OFFSET
         }
 
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L2028
         fn ethiopian_from_fixed(date: i32) -> EthiopianDateInner {
             let coptic_date = Coptic::coptic_from_fixed(date + ETHIOPIC_TO_COPTIC_OFFSET);
 
             #[allow(clippy::unwrap_used)]
-            // Coptic and Ethiopic have the same allowed ranges for dates
             *Date::try_new_ethiopian_date(
                 EthiopianEraStyle::AmeteMihret,
                 coptic_date.0.year,
@@ -3167,28 +2411,6 @@ pub mod ethiopian {
     }
 
     impl Date<Ethiopian> {
-        /// Construct new Ethiopian Date.
-        ///
-        /// For the Amete Mihret era style, negative years work with
-        /// year 0 as 1 pre-Incarnation, year -1 as 2 pre-Incarnation,
-        /// and so on.
-        ///
-        /// ```rust
-        /// use icu::calendar::ethiopian::EthiopianEraStyle;
-        /// use icu::calendar::Date;
-        ///
-        /// let date_ethiopian = Date::try_new_ethiopian_date(
-        ///     EthiopianEraStyle::AmeteMihret,
-        ///     2014,
-        ///     8,
-        ///     25,
-        /// )
-        /// .expect("Failed to initialize Ethopic Date instance.");
-        ///
-        /// assert_eq!(date_ethiopian.year().number, 2014);
-        /// assert_eq!(date_ethiopian.month().ordinal, 8);
-        /// assert_eq!(date_ethiopian.day_of_month().0, 25);
-        /// ```
         pub fn try_new_ethiopian_date(
             era_style: EthiopianEraStyle,
             mut year: i32,
@@ -3218,34 +2440,6 @@ pub mod ethiopian {
     }
 
     impl DateTime<Ethiopian> {
-        /// Construct a new Ethiopian datetime from integers.
-        ///
-        /// For the Amete Mihret era style, negative years work with
-        /// year 0 as 1 pre-Incarnation, year -1 as 2 pre-Incarnation,
-        /// and so on.
-        ///
-        /// ```rust
-        /// use icu::calendar::ethiopian::EthiopianEraStyle;
-        /// use icu::calendar::DateTime;
-        ///
-        /// let datetime_ethiopian = DateTime::try_new_ethiopian_datetime(
-        ///     EthiopianEraStyle::AmeteMihret,
-        ///     2014,
-        ///     8,
-        ///     25,
-        ///     13,
-        ///     1,
-        ///     0,
-        /// )
-        /// .expect("Failed to initialize Ethiopian DateTime instance.");
-        ///
-        /// assert_eq!(datetime_ethiopian.date.year().number, 2014);
-        /// assert_eq!(datetime_ethiopian.date.month().ordinal, 8);
-        /// assert_eq!(datetime_ethiopian.date.day_of_month().0, 25);
-        /// assert_eq!(datetime_ethiopian.time.hour.number(), 13);
-        /// assert_eq!(datetime_ethiopian.time.minute.number(), 1);
-        /// assert_eq!(datetime_ethiopian.time.second.number(), 0);
-        /// ```
         pub fn try_new_ethiopian_datetime(
             era_style: EthiopianEraStyle,
             year: i32,
@@ -3268,7 +2462,6 @@ pub mod ethiopian {
 
         #[test]
         fn test_leap_year() {
-            // 11th September 2023 in gregorian is 6/13/2015 in ethiopian
             let iso_date = Date::try_new_iso_date(2023, 9, 11).unwrap();
             let ethiopian_date = Ethiopian::new().date_from_iso(iso_date);
             assert_eq!(ethiopian_date.0.year, 2015);
@@ -3293,7 +2486,6 @@ pub mod ethiopian {
 
         #[test]
         fn test_roundtrip_negative() {
-            // https://github.com/unicode-org/icu4x/issues/2254
             let iso_date = Date::try_new_iso_date(-1000, 3, 3).unwrap();
             let ethiopian = iso_date.to_calendar(Ethiopian::new());
             let recovered_iso = ethiopian.to_iso();
@@ -3335,38 +2527,7 @@ mod fuzz {
     }
 }
 pub mod gregorian {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains types and implementations for the Gregorian calendar.
-    //!
-    //! ```rust
-    //! use icu::calendar::{gregorian::Gregorian, Date, DateTime};
-    //!
-    //! // `Date` type
-    //! let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    //!     .expect("Failed to initialize ISO Date instance.");
-    //! let date_gregorian = Date::new_from_iso(date_iso, Gregorian);
-    //!
-    //! // `DateTime` type
-    //! let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    //!     .expect("Failed to initialize ISO DateTime instance.");
-    //! let datetime_gregorian = DateTime::new_from_iso(datetime_iso, Gregorian);
-    //!
-    //! // `Date` checks
-    //! assert_eq!(date_gregorian.year().number, 1970);
-    //! assert_eq!(date_gregorian.month().ordinal, 1);
-    //! assert_eq!(date_gregorian.day_of_month().0, 2);
-    //!
-    //! // `DateTime` type
-    //! assert_eq!(datetime_gregorian.date.year().number, 1970);
-    //! assert_eq!(datetime_gregorian.date.month().ordinal, 1);
-    //! assert_eq!(datetime_gregorian.date.day_of_month().0, 2);
-    //! assert_eq!(datetime_gregorian.time.hour.number(), 13);
-    //! assert_eq!(datetime_gregorian.time.minute.number(), 1);
-    //! assert_eq!(datetime_gregorian.time.second.number(), 0);
-    //! ```
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::calendar_arithmetic::ArithmeticDate;
@@ -3374,24 +2535,12 @@ pub mod gregorian {
     use crate::{types, Calendar, CalendarError, Date, DateDuration, DateDurationUnit, DateTime};
     use tinystr::tinystr;
 
-    /// The Gregorian Calendar
-    ///
-    /// The [Gregorian calendar] is a solar calendar used by most of the world, with twelve months.
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// [Gregorian calendar]: https://en.wikipedia.org/wiki/Gregorian_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar supports two era codes: `"bce"`, and `"ce"`, corresponding to the BCE and CE eras
     #[derive(Copy, Clone, Debug, Default)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct Gregorian;
 
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
-    /// The inner date type used for representing [`Date`]s of [`Gregorian`]. See [`Date`] and [`Gregorian`] for more details.
     pub struct GregorianDateInner(IsoDateInner);
 
     impl Calendar for Gregorian {
@@ -3459,22 +2608,18 @@ pub mod gregorian {
                 .cast_unit()
         }
 
-        /// The calendar-specific year represented by `date`
         fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
             year_as_gregorian(date.0 .0.year)
         }
 
-        /// The calendar-specific month represented by `date`
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             Iso.month(&date.0)
         }
 
-        /// The calendar-specific day-of-month represented by `date`
         fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
             Iso.day_of_month(&date.0)
         }
 
-        /// Information of the day of the year
         fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
             let prev_year = date.0 .0.year - 1;
             let next_year = date.0 .0.year + 1;
@@ -3497,22 +2642,6 @@ pub mod gregorian {
     }
 
     impl Date<Gregorian> {
-        /// Construct a new Gregorian Date.
-        ///
-        /// Years are specified as ISO years.
-        ///
-        /// ```rust
-        /// use icu::calendar::Date;
-        /// use std::convert::TryFrom;
-        ///
-        /// // Conversion from ISO to Gregorian
-        /// let date_gregorian = Date::try_new_gregorian_date(1970, 1, 2)
-        ///     .expect("Failed to initialize Gregorian Date instance.");
-        ///
-        /// assert_eq!(date_gregorian.year().number, 1970);
-        /// assert_eq!(date_gregorian.month().ordinal, 1);
-        /// assert_eq!(date_gregorian.day_of_month().0, 2);
-        /// ```
         pub fn try_new_gregorian_date(
             year: i32,
             month: u8,
@@ -3523,24 +2652,6 @@ pub mod gregorian {
     }
 
     impl DateTime<Gregorian> {
-        /// Construct a new Gregorian datetime from integers.
-        ///
-        /// Years are specified as ISO years.
-        ///
-        /// ```rust
-        /// use icu::calendar::DateTime;
-        ///
-        /// let datetime_gregorian =
-        ///     DateTime::try_new_gregorian_datetime(1970, 1, 2, 13, 1, 0)
-        ///         .expect("Failed to initialize Gregorian DateTime instance.");
-        ///
-        /// assert_eq!(datetime_gregorian.date.year().number, 1970);
-        /// assert_eq!(datetime_gregorian.date.month().ordinal, 1);
-        /// assert_eq!(datetime_gregorian.date.day_of_month().0, 2);
-        /// assert_eq!(datetime_gregorian.time.hour.number(), 13);
-        /// assert_eq!(datetime_gregorian.time.minute.number(), 1);
-        /// assert_eq!(datetime_gregorian.time.second.number(), 0);
-        /// ```
         pub fn try_new_gregorian_datetime(
             year: i32,
             month: u8,
@@ -3573,11 +2684,7 @@ pub mod gregorian {
     }
 }
 mod helpers {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    /// Calculate `(n / d, n % d)` such that the remainder is always positive.
     pub fn div_rem_euclid(n: i32, d: i32) -> (i32, i32) {
         debug_assert!(d > 0);
         let (a, b) = (n / d, n % d);
@@ -3588,12 +2695,8 @@ mod helpers {
         }
     }
 
-    /// Calculate `n / d` such that the remainder is always positive.
-    /// This is equivalent to quotient() in the Reingold/Dershowitz Lisp code
     pub const fn quotient(n: i32, d: i32) -> i32 {
         debug_assert!(d > 0);
-        // Code can use int_roundings once stabilized
-        // https://github.com/rust-lang/rust/issues/88581
         let (a, b) = (n / d, n % d);
         if n >= 0 || b == 0 {
             a
@@ -3658,38 +2761,7 @@ mod helpers {
     }
 }
 pub mod indian {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains types and implementations for the Indian national calendar.
-    //!
-    //! ```rust
-    //! use icu::calendar::{indian::Indian, Date, DateTime};
-    //!
-    //! // `Date` type
-    //! let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    //!     .expect("Failed to initialize ISO Date instance.");
-    //! let date_indian = Date::new_from_iso(date_iso, Indian);
-    //!
-    //! // `DateTime` type
-    //! let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    //!     .expect("Failed to initialize ISO DateTime instance.");
-    //! let datetime_indian = DateTime::new_from_iso(datetime_iso, Indian);
-    //!
-    //! // `Date` checks
-    //! assert_eq!(date_indian.year().number, 1891);
-    //! assert_eq!(date_indian.month().ordinal, 10);
-    //! assert_eq!(date_indian.day_of_month().0, 12);
-    //!
-    //! // `DateTime` type
-    //! assert_eq!(datetime_indian.date.year().number, 1891);
-    //! assert_eq!(datetime_indian.date.month().ordinal, 10);
-    //! assert_eq!(datetime_indian.date.day_of_month().0, 12);
-    //! assert_eq!(datetime_indian.time.hour.number(), 13);
-    //! assert_eq!(datetime_indian.time.minute.number(), 1);
-    //! assert_eq!(datetime_indian.time.second.number(), 0);
-    //! ```
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::calendar_arithmetic::{ArithmeticDate, CalendarArithmetic};
@@ -3698,23 +2770,11 @@ pub mod indian {
     use core::marker::PhantomData;
     use tinystr::tinystr;
 
-    /// The Indian National Calendar (aka the Saka calendar)
-    ///
-    /// The [Indian National calendar] is a solar calendar used by the Indian government, with twelve months.
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// [Indian National calendar]: https://en.wikipedia.org/wiki/Indian_national_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar has a single era: `"saka"`, with Saka 0 being 78 CE. Dates before this era use negative years.
     #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct Indian;
 
-    /// The inner date type used for representing [`Date`]s of [`Indian`]. See [`Date`] and [`Indian`] for more details.
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
     pub struct IndianDateInner(ArithmeticDate<Indian>);
 
@@ -3752,10 +2812,7 @@ pub mod indian {
         }
     }
 
-    /// The Saka calendar starts on the 81st day of the Gregorian year (March 22 or 21)
-    /// which is an 80 day offset. This number should be subtracted from Gregorian dates
     const DAY_OFFSET: u32 = 80;
-    /// The Saka calendar is 78 years behind Gregorian. This number should be added to Gregorian dates
     const YEAR_OFFSET: i32 = 78;
 
     impl Calendar for Indian {
@@ -3774,18 +2831,13 @@ pub mod indian {
             ArithmeticDate::new_from_solar(self, year, month_code, day).map(IndianDateInner)
         }
 
-        //
         fn date_from_iso(&self, iso: Date<Iso>) -> IndianDateInner {
-            // Get day number in year (1 indexed)
             let day_of_year_iso = Iso::day_of_year(*iso.inner());
-            // Convert to Saka year
             let mut year = iso.inner().0.year - YEAR_OFFSET;
-            // This is in the previous Indian year
             let day_of_year_indian = if day_of_year_iso <= DAY_OFFSET {
                 year -= 1;
                 let n_days = Self::days_in_provided_year(year);
 
-                // calculate day of year in previous year
                 n_days + day_of_year_iso - DAY_OFFSET
             } else {
                 day_of_year_iso - DAY_OFFSET
@@ -3800,7 +2852,6 @@ pub mod indian {
             let mut year = date.0.year + YEAR_OFFSET;
             let day_of_year_iso = if day_of_year_indian + DAY_OFFSET >= days_in_year {
                 year += 1;
-                // calculate day of year in next year
                 day_of_year_indian + DAY_OFFSET - days_in_year
             } else {
                 day_of_year_indian + DAY_OFFSET
@@ -3887,7 +2938,6 @@ pub mod indian {
     }
 
     impl Indian {
-        /// Construct a new Indian Calendar
         pub fn new() -> Self {
             Self
         }
@@ -3902,18 +2952,6 @@ pub mod indian {
     }
 
     impl Date<Indian> {
-        /// Construct new Indian Date, with year provided in the Śaka era.
-        ///
-        /// ```rust
-        /// use icu::calendar::Date;
-        ///
-        /// let date_indian = Date::try_new_indian_date(1891, 10, 12)
-        ///     .expect("Failed to initialize Indian Date instance.");
-        ///
-        /// assert_eq!(date_indian.year().number, 1891);
-        /// assert_eq!(date_indian.month().ordinal, 10);
-        /// assert_eq!(date_indian.day_of_month().0, 12);
-        /// ```
         pub fn try_new_indian_date(
             year: i32,
             month: u8,
@@ -3936,22 +2974,6 @@ pub mod indian {
     }
 
     impl DateTime<Indian> {
-        /// Construct a new Indian datetime from integers, with year provided in the Śaka era.
-        ///
-        /// ```rust
-        /// use icu::calendar::DateTime;
-        ///
-        /// let datetime_indian =
-        ///     DateTime::try_new_indian_datetime(1891, 10, 12, 13, 1, 0)
-        ///         .expect("Failed to initialize Indian DateTime instance.");
-        ///
-        /// assert_eq!(datetime_indian.date.year().number, 1891);
-        /// assert_eq!(datetime_indian.date.month().ordinal, 10);
-        /// assert_eq!(datetime_indian.date.day_of_month().0, 12);
-        /// assert_eq!(datetime_indian.time.hour.number(), 13);
-        /// assert_eq!(datetime_indian.time.minute.number(), 1);
-        /// assert_eq!(datetime_indian.time.second.number(), 0);
-        /// ```
         pub fn try_new_indian_datetime(
             year: i32,
             month: u8,
@@ -4012,10 +3034,6 @@ pub mod indian {
 
         #[test]
         fn roundtrip_indian() {
-            // Ultimately the day of the year will always be identical regardless of it
-            // being a leap year or not
-            // Test dates that occur after and before Chaitra 1 (March 22/21), in all years of
-            // a four-year leap cycle, to ensure that all code paths are tested
             assert_roundtrip(1944, 6, 7, 2022, 8, 29);
             assert_roundtrip(1943, 6, 7, 2021, 8, 29);
             assert_roundtrip(1942, 6, 7, 2020, 8, 29);
@@ -4028,36 +3046,7 @@ pub mod indian {
     }
 }
 pub mod iso {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains types and implementations for the ISO calendar.
-    //!
-    //! ```rust
-    //! use icu::calendar::{Date, DateTime};
-    //!
-    //! // `Date` type
-    //! let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    //!     .expect("Failed to initialize ISO Date instance.");
-    //!
-    //! // `DateTime` type
-    //! let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    //!     .expect("Failed to initialize ISO DateTime instance.");
-    //!
-    //! // `Date` checks
-    //! assert_eq!(date_iso.year().number, 1970);
-    //! assert_eq!(date_iso.month().ordinal, 1);
-    //! assert_eq!(date_iso.day_of_month().0, 2);
-    //!
-    //! // `DateTime` type
-    //! assert_eq!(datetime_iso.date.year().number, 1970);
-    //! assert_eq!(datetime_iso.date.month().ordinal, 1);
-    //! assert_eq!(datetime_iso.date.day_of_month().0, 2);
-    //! assert_eq!(datetime_iso.time.hour.number(), 13);
-    //! assert_eq!(datetime_iso.time.minute.number(), 1);
-    //! assert_eq!(datetime_iso.time.second.number(), 0);
-    //! ```
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::calendar_arithmetic::{ArithmeticDate, CalendarArithmetic};
@@ -4065,22 +3054,8 @@ pub mod iso {
     use crate::{types, Calendar, CalendarError, Date, DateDuration, DateDurationUnit, DateTime};
     use tinystr::tinystr;
 
-    // The georgian epoch is equivalent to first day in fixed day measurement
     const EPOCH: i32 = 1;
 
-    /// The [ISO Calendar]
-    ///
-    /// The [ISO Calendar] is a standardized solar calendar with twelve months.
-    /// It is identical to the Gregorian calendar, except it uses negative years for years before 1 CE,
-    /// and may have differing formatting data for a given locale.
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// [ISO Calendar]: https://en.wikipedia.org/wiki/ISO_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar supports one era, `"default"`
 
     #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
@@ -4088,7 +3063,6 @@ pub mod iso {
     pub struct Iso;
 
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
-    /// The inner date type used for representing [`Date`]s of [`Iso`]. See [`Date`] and [`Iso`] for more details.
     pub struct IsoDateInner(pub(crate) ArithmeticDate<Iso>);
 
     impl CalendarArithmetic for Iso {
@@ -4121,7 +3095,6 @@ pub mod iso {
 
     impl Calendar for Iso {
         type DateInner = IsoDateInner;
-        /// Construct a date from era/month codes and fields
         fn date_from_codes(
             &self,
             era: types::Era,
@@ -4157,20 +3130,12 @@ pub mod iso {
         }
 
         fn day_of_week(&self, date: &Self::DateInner) -> types::IsoWeekday {
-            // For the purposes of the calculation here, Monday is 0, Sunday is 6
-            // ISO has Monday=1, Sunday=7, which we transform in the last step
 
-            // The days of the week are the same every 400 years
-            // so we normalize to the nearest multiple of 400
             let years_since_400 = date.0.year % 400;
             let leap_years_since_400 = years_since_400 / 4 - years_since_400 / 100;
-            // The number of days to the current year
             let days_to_current_year = 365 * years_since_400 + leap_years_since_400;
-            // The weekday offset from January 1 this year and January 1 2000
             let year_offset = days_to_current_year % 7;
 
-            // Corresponding months from
-            // https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Corresponding_months
             let month_offset = if Self::is_leap_year(date.0.year) {
                 match date.0.month {
                     10 => 0,
@@ -4197,7 +3162,6 @@ pub mod iso {
             let january_1_2000 = 5; // Saturday
             let day_offset = (january_1_2000 + year_offset + month_offset + date.0.day as i32) % 7;
 
-            // We calculated in a zero-indexed fashion, but ISO specifies one-indexed
             types::IsoWeekday::from((day_offset + 1) as usize)
         }
 
@@ -4217,17 +3181,14 @@ pub mod iso {
             date1.0.until(date2.0, _largest_unit, _smallest_unit)
         }
 
-        /// The calendar-specific year represented by `date`
         fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
             Self::year_as_iso(date.0.year)
         }
 
-        /// The calendar-specific month represented by `date`
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             date.0.solar_month()
         }
 
-        /// The calendar-specific day-of-month represented by `date`
         fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
             date.0.day_of_month()
         }
@@ -4254,18 +3215,6 @@ pub mod iso {
     }
 
     impl Date<Iso> {
-        /// Construct a new ISO date from integers.
-        ///
-        /// ```rust
-        /// use icu::calendar::Date;
-        ///
-        /// let date_iso = Date::try_new_iso_date(1970, 1, 2)
-        ///     .expect("Failed to initialize ISO Date instance.");
-        ///
-        /// assert_eq!(date_iso.year().number, 1970);
-        /// assert_eq!(date_iso.month().ordinal, 1);
-        /// assert_eq!(date_iso.day_of_month().0, 2);
-        /// ```
         pub fn try_new_iso_date(year: i32, month: u8, day: u8) -> Result<Date<Iso>, CalendarError> {
             if !(1..=12).contains(&month) {
                 return Err(CalendarError::OutOfRange);
@@ -4281,21 +3230,6 @@ pub mod iso {
     }
 
     impl DateTime<Iso> {
-        /// Construct a new ISO datetime from integers.
-        ///
-        /// ```rust
-        /// use icu::calendar::DateTime;
-        ///
-        /// let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-        ///     .expect("Failed to initialize ISO DateTime instance.");
-        ///
-        /// assert_eq!(datetime_iso.date.year().number, 1970);
-        /// assert_eq!(datetime_iso.date.month().ordinal, 1);
-        /// assert_eq!(datetime_iso.date.day_of_month().0, 2);
-        /// assert_eq!(datetime_iso.time.hour.number(), 13);
-        /// assert_eq!(datetime_iso.time.minute.number(), 1);
-        /// assert_eq!(datetime_iso.time.second.number(), 0);
-        /// ```
         pub fn try_new_iso_datetime(
             year: i32,
             month: u8,
@@ -4310,24 +3244,6 @@ pub mod iso {
             })
         }
 
-        /// Minute count representation of calendars starting from 00:00:00 on Jan 1st, 1970.
-        ///
-        /// ```rust
-        /// use icu::calendar::DateTime;
-        ///
-        /// let today = DateTime::try_new_iso_datetime(2020, 2, 29, 0, 0, 0).unwrap();
-        ///
-        /// assert_eq!(today.minutes_since_local_unix_epoch(), 26382240);
-        /// assert_eq!(
-        ///     DateTime::from_minutes_since_local_unix_epoch(26382240),
-        ///     today
-        /// );
-        ///
-        /// let today = DateTime::try_new_iso_datetime(1970, 1, 1, 0, 0, 0).unwrap();
-        ///
-        /// assert_eq!(today.minutes_since_local_unix_epoch(), 0);
-        /// assert_eq!(DateTime::from_minutes_since_local_unix_epoch(0), today);
-        /// ```
         pub fn minutes_since_local_unix_epoch(&self) -> i32 {
             let minutes_a_hour = 60;
             let hours_a_day = 24;
@@ -4343,37 +3259,6 @@ pub mod iso {
             }
         }
 
-        /// Convert minute count since 00:00:00 on Jan 1st, 1970 to ISO Date.
-        ///
-        /// # Examples
-        ///
-        /// ```rust
-        /// use icu::calendar::DateTime;
-        ///
-        /// // After Unix Epoch
-        /// let today = DateTime::try_new_iso_datetime(2020, 2, 29, 0, 0, 0).unwrap();
-        ///
-        /// assert_eq!(today.minutes_since_local_unix_epoch(), 26382240);
-        /// assert_eq!(
-        ///     DateTime::from_minutes_since_local_unix_epoch(26382240),
-        ///     today
-        /// );
-        ///
-        /// // Unix Epoch
-        /// let today = DateTime::try_new_iso_datetime(1970, 1, 1, 0, 0, 0).unwrap();
-        ///
-        /// assert_eq!(today.minutes_since_local_unix_epoch(), 0);
-        /// assert_eq!(DateTime::from_minutes_since_local_unix_epoch(0), today);
-        ///
-        /// // Before Unix Epoch
-        /// let today = DateTime::try_new_iso_datetime(1967, 4, 6, 20, 40, 0).unwrap();
-        ///
-        /// assert_eq!(today.minutes_since_local_unix_epoch(), -1440200);
-        /// assert_eq!(
-        ///     DateTime::from_minutes_since_local_unix_epoch(-1440200),
-        ///     today
-        /// );
-        /// ```
         pub fn from_minutes_since_local_unix_epoch(minute: i32) -> DateTime<Iso> {
             let (time, extra_days) = types::Time::from_minute_with_remainder_days(minute);
             #[allow(clippy::unwrap_used)] // constant date
@@ -4385,12 +3270,10 @@ pub mod iso {
     }
 
     impl Iso {
-        /// Construct a new ISO Calendar
         pub fn new() -> Self {
             Self
         }
 
-        /// Count the number of days in a given month/year combo
         fn days_in_month(year: i32, month: u8) -> u8 {
             match month {
                 4 | 6 | 9 | 11 => 30,
@@ -4408,19 +3291,11 @@ pub mod iso {
             }
         }
 
-        // Fixed is day count representation of calendars starting from Jan 1st of year 1.
-        // The fixed calculations algorithms are from the Calendrical Calculations book.
-        //
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L1167-L1189
         pub(crate) fn fixed_from_iso(date: IsoDateInner) -> i32 {
-            // Calculate days per year
             let mut fixed: i32 = EPOCH - 1 + 365 * (date.0.year - 1);
-            // Adjust for leap year logic
             fixed += quotient(date.0.year - 1, 4) - quotient(date.0.year - 1, 100)
                 + quotient(date.0.year - 1, 400);
-            // Days of current year
             fixed += quotient(367 * (date.0.month as i32) - 362, 12);
-            // Leap year adjustment for the current year
             fixed += if date.0.month <= 2 {
                 0
             } else if Self::is_leap_year(date.0.year) {
@@ -4428,7 +3303,6 @@ pub mod iso {
             } else {
                 -2
             };
-            // Days passed in current month
             fixed + (date.0.day as i32)
         }
 
@@ -4458,16 +3332,12 @@ pub mod iso {
             Date::try_new_iso_date(year, month, day).unwrap()
         }
 
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L1191-L1217
         fn iso_year_from_fixed(date: i32) -> i32 {
             let date = date - EPOCH;
-            // 400 year cycles have 146097 days
             let (n_400, date) = div_rem_euclid(date, 146097);
 
-            // 100 year cycles have 36524 days
             let (n_100, date) = div_rem_euclid(date, 36524);
 
-            // 4 year cycles have 1461 days
             let (n_4, date) = div_rem_euclid(date, 1461);
 
             let n_1 = quotient(date, 365);
@@ -4486,7 +3356,6 @@ pub mod iso {
             Self::fixed_from_iso_integers(year, 1, 1).unwrap()
         }
 
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L1237-L1258
         pub(crate) fn iso_from_fixed(date: i32) -> Date<Iso> {
             let year = Self::iso_year_from_fixed(date);
             let prior_days = date - Self::iso_new_year(year);
@@ -4506,13 +3375,10 @@ pub mod iso {
         }
 
         pub(crate) fn day_of_year(date: IsoDateInner) -> u32 {
-            // Cumulatively how much are dates in each month
-            // offset from "30 days in each month" (in non leap years)
             let month_offset = [0, 1, -1, 0, 0, 1, 1, 2, 3, 3, 4, 4];
             #[allow(clippy::indexing_slicing)] // date.0.month in 1..=12
             let mut offset = month_offset[date.0.month as usize - 1];
             if Self::is_leap_year(date.0.year) && date.0.month > 2 {
-                // Months after February in a leap year are offset by one less
                 offset += 1;
             }
             let prev_month_days = (30 * (date.0.month as i32 - 1) + offset) as u32;
@@ -4520,7 +3386,6 @@ pub mod iso {
             prev_month_days + date.0.day as u32
         }
 
-        /// Wrap the year in the appropriate era code
         fn year_as_iso(year: i32) -> types::FormattableYear {
             types::FormattableYear {
                 era: types::Era(tinystr!(16, "default")),
@@ -4556,17 +3421,14 @@ pub mod iso {
 
         #[test]
         fn test_day_of_week() {
-            // June 23, 2021 is a Wednesday
             assert_eq!(
                 Date::try_new_iso_date(2021, 6, 23).unwrap().day_of_week(),
                 IsoWeekday::Wednesday,
             );
-            // Feb 2, 1983 was a Wednesday
             assert_eq!(
                 Date::try_new_iso_date(1983, 2, 2).unwrap().day_of_week(),
                 IsoWeekday::Wednesday,
             );
-            // Jan 21, 2021 was a Tuesday
             assert_eq!(
                 Date::try_new_iso_date(2020, 1, 21).unwrap().day_of_week(),
                 IsoWeekday::Tuesday,
@@ -4575,7 +3437,6 @@ pub mod iso {
 
         #[test]
         fn test_day_of_year() {
-            // June 23, 2021 was day 174
             assert_eq!(
                 Date::try_new_iso_date(2021, 6, 23)
                     .unwrap()
@@ -4583,7 +3444,6 @@ pub mod iso {
                     .day_of_year,
                 174,
             );
-            // June 23, 2020 was day 175
             assert_eq!(
                 Date::try_new_iso_date(2020, 6, 23)
                     .unwrap()
@@ -4591,7 +3451,6 @@ pub mod iso {
                     .day_of_year,
                 175,
             );
-            // Feb 2, 1983 was a Wednesday
             assert_eq!(
                 Date::try_new_iso_date(1983, 2, 2)
                     .unwrap()
@@ -4688,13 +3547,11 @@ pub mod iso {
         #[test]
         fn test_offset_handles_out_of_bound_month_offset() {
             let today = Date::try_new_iso_date(2021, 1, 31).unwrap();
-            // since 2021/02/31 isn't a valid date, `offset_date` auto-adjusts by adding 3 days to 2021/02/28
             let today_plus_1_month = Date::try_new_iso_date(2021, 3, 3).unwrap();
             let offset = today.added(DateDuration::new(0, 1, 0, 0));
             assert_eq!(offset, today_plus_1_month);
 
             let today = Date::try_new_iso_date(2021, 1, 31).unwrap();
-            // since 2021/02/31 isn't a valid date, `offset_date` auto-adjusts by adding 3 days to 2021/02/28
             let today_plus_1_month_1_day = Date::try_new_iso_date(2021, 3, 4).unwrap();
             let offset = today.added(DateDuration::new(0, 1, 0, 1));
             assert_eq!(offset, today_plus_1_month_1_day);
@@ -4702,8 +3559,6 @@ pub mod iso {
 
         #[test]
         fn test_iso_to_from_fixed() {
-            // Reminder: ISO year 0 is Gregorian year 1 BCE.
-            // Year 0 is a leap year due to the 400-year rule.
             fn check(fixed: i32, year: i32, month: u8, day: u8) {
                 assert_eq!(Iso::iso_year_from_fixed(fixed), year, "fixed: {fixed}");
                 assert_eq!(
@@ -4764,52 +3619,7 @@ pub mod iso {
     }
 }
 pub mod japanese {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains types and implementations for the Japanese calendar.
-    //!
-    //! ```rust
-    //! use icu::calendar::japanese::Japanese;
-    //! use icu::calendar::{types::Era, Date, DateTime};
-    //! use tinystr::tinystr;
-    //!
-    //! // `icu_testdata::unstable` contains information specifying era dates.
-    //! // Production code should probably use its own data provider
-    //! let japanese_calendar =
-    //!     Japanese::try_new_unstable(&icu_testdata::unstable())
-    //!         .expect("Cannot load japanese data");
-    //!
-    //! // `Date` type
-    //! let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    //!     .expect("Failed to initialize ISO Date instance.");
-    //! let date_japanese = Date::new_from_iso(date_iso, japanese_calendar.clone());
-    //!
-    //! // `DateTime` type
-    //! let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    //!     .expect("Failed to initialize ISO DateTime instance.");
-    //! let datetime_japanese =
-    //!     DateTime::new_from_iso(datetime_iso, japanese_calendar.clone());
-    //!
-    //! // `Date` checks
-    //! assert_eq!(date_japanese.year().number, 45);
-    //! assert_eq!(date_japanese.month().ordinal, 1);
-    //! assert_eq!(date_japanese.day_of_month().0, 2);
-    //! assert_eq!(date_japanese.year().era, Era(tinystr!(16, "showa")));
-    //!
-    //! // `DateTime` type
-    //! assert_eq!(datetime_japanese.date.year().number, 45);
-    //! assert_eq!(datetime_japanese.date.month().ordinal, 1);
-    //! assert_eq!(datetime_japanese.date.day_of_month().0, 2);
-    //! assert_eq!(
-    //!     datetime_japanese.date.year().era,
-    //!     Era(tinystr!(16, "showa"))
-    //! );
-    //! assert_eq!(datetime_japanese.time.hour.number(), 13);
-    //! assert_eq!(datetime_japanese.time.minute.number(), 1);
-    //! assert_eq!(datetime_japanese.time.second.number(), 0);
-    //! ```
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::iso::{Iso, IsoDateInner};
@@ -4821,59 +3631,15 @@ pub mod japanese {
     use icu_provider::prelude::*;
     use tinystr::{tinystr, TinyStr16};
 
-    /// The [Japanese Calendar] (with modern eras only)
-    ///
-    /// The [Japanese calendar] is a solar calendar used in Japan, with twelve months.
-    /// The months and days are identical to that of the Gregorian calendar, however the years are counted
-    /// differently using the Japanese era system.
-    ///
-    /// This calendar only contains eras after Meiji, for all historical eras, check out [`JapaneseExtended`].
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// [Japanese calendar]: https://en.wikipedia.org/wiki/Japanese_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar currently supports seven era codes. It supports the five post-Meiji eras
-    /// (`"meiji"`, `"taisho"`, `"showa"`, `"heisei"`, `"reiwa"`), as well as using the Gregorian
-    /// `"bce"` and `"ce"` for dates before the Meiji era.
-    ///
-    /// Future eras will also be added to this type when they are decided.
-    ///
-    /// These eras are loaded from data, requiring a data provider capable of providing [`JapaneseErasV1Marker`]
-    /// data (`calendar/japanese@1`).
     #[derive(Clone, Debug, Default)]
     pub struct Japanese {
         eras: DataPayload<JapaneseErasV1Marker>,
     }
 
-    /// The [Japanese Calendar] (with historical eras)
-    ///
-    /// The [Japanese calendar] is a solar calendar used in Japan, with twelve months.
-    /// The months and days are identical to that of the Gregorian calendar, however the years are counted
-    /// differently using the Japanese era system.
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// [Japanese calendar]: https://en.wikipedia.org/wiki/Japanese_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar supports a large number of era codes. It supports the five post-Meiji eras
-    /// (`"meiji"`, `"taisho"`, `"showa"`, `"heisei"`, `"reiwa"`). Pre-Meiji eras are represented
-    /// with their names converted to lowercase ascii and followed by their start year. E.g. the "Ten'ō"
-    /// era (781 - 782 CE) has the code `"teno-781"`. The  Gregorian `"bce"` and `"ce"` eras
-    /// are used for dates before the first known era era.
-    ///
-    ///
-    /// These eras are loaded from data, requiring a data provider capable of providing [`JapaneseExtendedErasV1Marker`]
-    /// data (`calendar/japanext@1`).
     #[derive(Clone, Debug, Default)]
     pub struct JapaneseExtended(Japanese);
 
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
-    /// The inner date type used for representing [`Date`]s of [`Japanese`]. See [`Date`] and [`Japanese`] for more details.
     pub struct JapaneseDateInner {
         inner: IsoDateInner,
         adjusted_year: i32,
@@ -4881,12 +3647,6 @@ pub mod japanese {
     }
 
     impl Japanese {
-        /// Creates a new [`Japanese`] from locale data using only modern eras (post-meiji).
-        ///
-        /// [📚 Help choosing a constructor](icu_provider::constructors)
-        /// <div class="stab unstable">
-        /// ⚠️ The bounds on this function may change over time, including in SemVer minor releases.
-        /// </div>
         pub fn try_new_unstable<D: DataProvider<JapaneseErasV1Marker> + ?Sized>(
             data_provider: &D,
         ) -> Result<Self, CalendarError> {
@@ -4929,12 +3689,6 @@ pub mod japanese {
     }
 
     impl JapaneseExtended {
-        /// Creates a new [`Japanese`] from locale data using all eras (including pre-meiji).
-        ///
-        /// [📚 Help choosing a constructor](icu_provider::constructors)
-        /// <div class="stab unstable">
-        /// ⚠️ The bounds on this function may change over time, including in SemVer minor releases.
-        /// </div>
         pub fn try_new_unstable<D: DataProvider<JapaneseExtendedErasV1Marker> + ?Sized>(
             data_provider: &D,
         ) -> Result<Self, CalendarError> {
@@ -5017,7 +3771,6 @@ pub mod japanese {
             .cast_unit()
         }
 
-        /// The calendar-specific year represented by `date`
         fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
             types::FormattableYear {
                 era: types::Era(date.era),
@@ -5026,17 +3779,14 @@ pub mod japanese {
             }
         }
 
-        /// The calendar-specific month represented by `date`
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             Iso.month(&date.inner)
         }
 
-        /// The calendar-specific day-of-month represented by `date`
         fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
             Iso.day_of_month(&date.inner)
         }
 
-        /// Information of the day of the year
         fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
             let prev_dec_31 = IsoDateInner::dec_31(date.inner.0.year - 1);
             let next_jan_1 = IsoDateInner::jan_1(date.inner.0.year + 1);
@@ -5118,22 +3868,18 @@ pub mod japanese {
             .cast_unit()
         }
 
-        /// The calendar-specific year represented by `date`
         fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
             Japanese::year(&self.0, date)
         }
 
-        /// The calendar-specific month represented by `date`
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             Japanese::month(&self.0, date)
         }
 
-        /// The calendar-specific day-of-month represented by `date`
         fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
             Japanese::day_of_month(&self.0, date)
         }
 
-        /// Information of the day of the year
         fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
             Japanese::day_of_year_info(&self.0, date)
         }
@@ -5148,48 +3894,6 @@ pub mod japanese {
     }
 
     impl Date<Japanese> {
-        /// Construct a new Japanese Date.
-        ///
-        /// Years are specified in the era provided, and must be in range for Japanese
-        /// eras (e.g. dates past April 30 Heisei 31 must be in Reiwa; "Jun 5 Heisei 31" and "Jan 1 Heisei 32"
-        /// will not be adjusted to being in Reiwa 1 and 2 respectively)
-        ///
-        /// However, dates may always be specified in "bce" or "ce" and they will be adjusted as necessary.
-        ///
-        /// ```rust
-        /// use icu::calendar::japanese::Japanese;
-        /// use icu::calendar::{types, Date, Ref};
-        /// use std::convert::TryFrom;
-        /// use tinystr::tinystr;
-        ///
-        /// let japanese_calendar =
-        ///     Japanese::try_new_unstable(&icu_testdata::unstable())
-        ///         .expect("Cannot load japanese data");
-        /// // for easy sharing
-        /// let japanese_calendar = Ref(&japanese_calendar);
-        ///
-        /// let era = types::Era(tinystr!(16, "heisei"));
-        ///
-        /// let date = Date::try_new_japanese_date(era, 14, 1, 2, japanese_calendar)
-        ///     .expect("Constructing a date should succeed");
-        ///
-        /// assert_eq!(date.year().era, era);
-        /// assert_eq!(date.year().number, 14);
-        /// assert_eq!(date.month().ordinal, 1);
-        /// assert_eq!(date.day_of_month().0, 2);
-        ///
-        /// // This function will error for eras that are out of bounds:
-        /// // (Heisei was 32 years long, Heisei 33 is in Reiwa)
-        /// let oob_date =
-        ///     Date::try_new_japanese_date(era, 33, 1, 2, japanese_calendar);
-        /// assert!(oob_date.is_err());
-        ///
-        /// // and for unknown eras
-        /// let fake_era = types::Era(tinystr!(16, "neko")); // 🐱
-        /// let fake_date =
-        ///     Date::try_new_japanese_date(fake_era, 10, 1, 2, japanese_calendar);
-        /// assert!(fake_date.is_err());
-        /// ```
         pub fn try_new_japanese_date<A: AsCalendar<Calendar = Japanese>>(
             era: types::Era,
             year: i32,
@@ -5205,37 +3909,6 @@ pub mod japanese {
     }
 
     impl Date<JapaneseExtended> {
-        /// Construct a new Japanese Date with all eras.
-        ///
-        /// Years are specified in the era provided, and must be in range for Japanese
-        /// eras (e.g. dates past April 30 Heisei 31 must be in Reiwa; "Jun 5 Heisei 31" and "Jan 1 Heisei 32"
-        /// will not be adjusted to being in Reiwa 1 and 2 respectively)
-        ///
-        /// However, dates may always be specified in "bce" or "ce" and they will be adjusted as necessary.
-        ///
-        /// ```rust
-        /// use icu::calendar::japanese::JapaneseExtended;
-        /// use icu::calendar::{types, Date, Ref};
-        /// use std::convert::TryFrom;
-        /// use tinystr::tinystr;
-        ///
-        /// let japanext_calendar =
-        ///     JapaneseExtended::try_new_unstable(&icu_testdata::unstable())
-        ///         .expect("Cannot load japanese data");
-        /// // for easy sharing
-        /// let japanext_calendar = Ref(&japanext_calendar);
-        ///
-        /// let era = types::Era(tinystr!(16, "kansei-1789"));
-        ///
-        /// let date =
-        ///     Date::try_new_japanese_extended_date(era, 7, 1, 2, japanext_calendar)
-        ///         .expect("Constructing a date should succeed");
-        ///
-        /// assert_eq!(date.year().era, era);
-        /// assert_eq!(date.year().number, 7);
-        /// assert_eq!(date.month().ordinal, 1);
-        /// assert_eq!(date.day_of_month().0, 2);
-        /// ```
         pub fn try_new_japanese_extended_date<A: AsCalendar<Calendar = JapaneseExtended>>(
             era: types::Era,
             year: i32,
@@ -5250,7 +3923,6 @@ pub mod japanese {
             Ok(Date::from_raw(inner, japanext_calendar))
         }
 
-        /// For testing era fallback in icu_datetime
         #[doc(hidden)]
         pub fn into_japanese_date(self) -> Date<Japanese> {
             Date::from_raw(self.inner, self.calendar.0)
@@ -5258,45 +3930,7 @@ pub mod japanese {
     }
 
     impl DateTime<Japanese> {
-        /// Construct a new Japanese datetime from integers.
-        ///
-        /// Years are specified in the era provided.
-        ///
-        /// ```rust
-        /// use icu::calendar::japanese::Japanese;
-        /// use icu::calendar::{types, DateTime};
-        /// use std::convert::TryFrom;
-        /// use tinystr::tinystr;
-        ///
-        /// let japanese_calendar =
-        ///     Japanese::try_new_unstable(&icu_testdata::unstable())
-        ///         .expect("Cannot load japanese data");
-        ///
-        /// let era = types::Era(tinystr!(16, "heisei"));
-        ///
-        /// let datetime = DateTime::try_new_japanese_datetime(
-        ///     era,
-        ///     14,
-        ///     1,
-        ///     2,
-        ///     13,
-        ///     1,
-        ///     0,
-        ///     japanese_calendar,
-        /// )
-        /// .expect("Constructing a date should succeed");
-        ///
-        /// assert_eq!(datetime.date.year().era, era);
-        /// assert_eq!(datetime.date.year().number, 14);
-        /// assert_eq!(datetime.date.month().ordinal, 1);
-        /// assert_eq!(datetime.date.day_of_month().0, 2);
-        /// assert_eq!(datetime.time.hour.number(), 13);
-        /// assert_eq!(datetime.time.minute.number(), 1);
-        /// assert_eq!(datetime.time.second.number(), 0);
-        /// ```
         #[allow(clippy::too_many_arguments)] // it's more convenient to have this many arguments
-                                             // if people wish to construct this by parts they can use
-                                             // Date::try_new_japanese_date() + DateTime::new(date, time)
         pub fn try_new_japanese_datetime<A: AsCalendar<Calendar = Japanese>>(
             era: types::Era,
             year: i32,
@@ -5315,45 +3949,7 @@ pub mod japanese {
     }
 
     impl DateTime<JapaneseExtended> {
-        /// Construct a new Japanese datetime from integers with all eras.
-        ///
-        /// Years are specified in the era provided.
-        ///
-        /// ```rust
-        /// use icu::calendar::japanese::JapaneseExtended;
-        /// use icu::calendar::{types, DateTime};
-        /// use std::convert::TryFrom;
-        /// use tinystr::tinystr;
-        ///
-        /// let japanext_calendar =
-        ///     JapaneseExtended::try_new_unstable(&icu_testdata::unstable())
-        ///         .expect("Cannot load japanese data");
-        ///
-        /// let era = types::Era(tinystr!(16, "kansei-1789"));
-        ///
-        /// let datetime = DateTime::try_new_japanese_extended_datetime(
-        ///     era,
-        ///     7,
-        ///     1,
-        ///     2,
-        ///     13,
-        ///     1,
-        ///     0,
-        ///     japanext_calendar,
-        /// )
-        /// .expect("Constructing a date should succeed");
-        ///
-        /// assert_eq!(datetime.date.year().era, era);
-        /// assert_eq!(datetime.date.year().number, 7);
-        /// assert_eq!(datetime.date.month().ordinal, 1);
-        /// assert_eq!(datetime.date.day_of_month().0, 2);
-        /// assert_eq!(datetime.time.hour.number(), 13);
-        /// assert_eq!(datetime.time.minute.number(), 1);
-        /// assert_eq!(datetime.time.second.number(), 0);
-        /// ```
         #[allow(clippy::too_many_arguments)] // it's more convenient to have this many arguments
-                                             // if people wish to construct this by parts they can use
-                                             // Date::try_new_japanese_date() + DateTime::new(date, time)
         pub fn try_new_japanese_extended_datetime<A: AsCalendar<Calendar = JapaneseExtended>>(
             era: types::Era,
             year: i32,
@@ -5406,17 +4002,9 @@ pub mod japanese {
     const FALLBACK_ERA: (EraStartDate, TinyStr16) = (REIWA_START, tinystr!(16, "reiwa"));
 
     impl Japanese {
-        /// Given an ISO date, give year and era for that date in the Japanese calendar
-        ///
-        /// This will also use Gregorian eras for eras that are before the earliest era
         fn adjusted_year_for(&self, date: &IsoDateInner) -> (i32, TinyStr16) {
             let date: EraStartDate = date.into();
             let (start, era) = self.japanese_era_for(date);
-            // The year in which an era starts is Year 1, and it may be short
-            // The only time this function will experience dates that are *before*
-            // the era start date are for the first era (Currently, taika-645
-            // for japanext, meiji for japanese),
-            // In such a case, we instead fall back to Gregorian era codes
             if date < start {
                 if date.year < 0 {
                     (1 - date.year, tinystr!(16, "bce"))
@@ -5428,16 +4016,11 @@ pub mod japanese {
             }
         }
 
-        /// Given an date, obtain the era data (not counting spliced gregorian eras)
         fn japanese_era_for(&self, date: EraStartDate) -> (EraStartDate, TinyStr16) {
             let era_data = self.eras.get();
-            // We optimize for the five "modern" post-Meiji eras, which are stored in a smaller
-            // array and also hardcoded. The hardcoded version is not used if data indicates the
-            // presence of newer eras.
             if date >= MEIJI_START
                 && era_data.dates_to_eras.last().map(|x| x.1) == Some(tinystr!(16, "reiwa"))
             {
-                // Fast path in case eras have not changed since this code was written
                 return if date >= REIWA_START {
                     (REIWA_START, tinystr!(16, "reiwa"))
                 } else if date >= HEISEI_START {
@@ -5459,17 +4042,11 @@ pub mod japanese {
             .unwrap_or(FALLBACK_ERA)
         }
 
-        /// Returns the range of dates for a given Japanese era code,
-        /// not handling "bce" or "ce"
-        ///
-        /// Returns (era_start, era_end)
         fn japanese_era_range_for(
             &self,
             era: TinyStr16,
         ) -> Result<(EraStartDate, Option<EraStartDate>), CalendarError> {
-            // Avoid linear search by trying well known eras
             if era == tinystr!(16, "reiwa") {
-                // Check if we're the last
                 if let Some(last) = self.eras.get().dates_to_eras.last() {
                     if last.1 == era {
                         return Ok((REIWA_START, None));
@@ -5487,7 +4064,6 @@ pub mod japanese {
 
             let era_data = self.eras.get();
             let data = &era_data.dates_to_eras;
-            // Try to avoid linear search by binary searching for the year suffix
             if let Some(year) = era.split('-').nth(1) {
                 if let Ok(ref int) = year.parse::<i32>() {
                     if let Ok(index) = data.binary_search_by(|(d, _)| d.year.cmp(int)) {
@@ -5495,9 +4071,6 @@ pub mod japanese {
                         let (era_start, code) = data
                             .get(index)
                             .expect("Indexing from successful binary search must succeed");
-                        // There is a slight chance we hit the case where there are two eras in the same year
-                        // There are a couple of rare cases of this, but it's not worth writing a range-based binary search
-                        // to catch them since this is an optimization
                         if code == era {
                             return Ok((era_start, data.get(index + 1).map(|e| e.0)));
                         }
@@ -5505,7 +4078,6 @@ pub mod japanese {
                 }
             }
 
-            // Avoidance didn't work. Let's find the era manually, searching back from the present
             if let Some((index, (start, _))) = data.iter().enumerate().rev().find(|d| d.1 .1 == era)
             {
                 return Ok((start, data.get(index + 1).map(|e| e.0)));
@@ -5610,7 +4182,6 @@ pub mod japanese {
             )
         }
 
-        // test that the Gregorian eras roundtrip to Japanese ones
         fn single_test_gregorian_roundtrip_ext(
             calendar: Ref<JapaneseExtended>,
             era: &str,
@@ -5691,7 +4262,6 @@ pub mod japanese {
 
             single_test_roundtrip(calendar, "heisei", 12, 3, 1);
             single_test_roundtrip(calendar, "taisho", 3, 3, 1);
-            // Heisei did not start until later in the year
             single_test_error(calendar, "heisei", 1, 1, 1, CalendarError::OutOfRange);
 
             single_test_roundtrip_ext(calendar_ext, "heisei", 12, 3, 1);
@@ -5711,7 +4281,6 @@ pub mod japanese {
                 ),
             );
 
-            // handle bce/ce
             single_test_roundtrip(calendar, "bce", 100, 3, 1);
             single_test_roundtrip(calendar, "bce", 1, 3, 1);
             single_test_roundtrip(calendar, "ce", 1, 3, 1);
@@ -5721,8 +4290,6 @@ pub mod japanese {
             single_test_error(calendar, "ce", 0, 3, 1, CalendarError::OutOfRange);
             single_test_error(calendar, "bce", -1, 3, 1, CalendarError::OutOfRange);
 
-            // handle the cases where bce/ce get adjusted to different eras
-            // single_test_gregorian_roundtrip(calendar, "ce", 2021, 3, 1, "reiwa", 3);
             single_test_gregorian_roundtrip_ext(calendar_ext, "ce", 1000, 3, 1, "choho-999", 2);
             single_test_gregorian_roundtrip_ext(
                 calendar_ext,
@@ -5735,8 +4302,6 @@ pub mod japanese {
             );
             single_test_gregorian_roundtrip_ext(calendar_ext, "bce", 10, 3, 1, "bce", 10);
 
-            // There were multiple eras in this year
-            // This one is from Apr 14 to July 2
             single_test_roundtrip_ext(calendar_ext, "tenpyokampo-749", 1, 4, 20);
             single_test_roundtrip_ext(calendar_ext, "tenpyokampo-749", 1, 4, 14);
             single_test_roundtrip_ext(calendar_ext, "tenpyokampo-749", 1, 7, 1);
@@ -5760,38 +4325,7 @@ pub mod japanese {
     }
 }
 pub mod julian {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains types and implementations for the Julian calendar.
-    //!
-    //! ```rust
-    //! use icu::calendar::{julian::Julian, Date, DateTime};
-    //!
-    //! // `Date` type
-    //! let date_iso = Date::try_new_iso_date(1970, 1, 2)
-    //!     .expect("Failed to initialize ISO Date instance.");
-    //! let date_julian = Date::new_from_iso(date_iso, Julian);
-    //!
-    //! // `DateTime` type
-    //! let datetime_iso = DateTime::try_new_iso_datetime(1970, 1, 2, 13, 1, 0)
-    //!     .expect("Failed to initialize ISO DateTime instance.");
-    //! let datetime_julian = DateTime::new_from_iso(datetime_iso, Julian);
-    //!
-    //! // `Date` checks
-    //! assert_eq!(date_julian.year().number, 1969);
-    //! assert_eq!(date_julian.month().ordinal, 12);
-    //! assert_eq!(date_julian.day_of_month().0, 20);
-    //!
-    //! // `DateTime` type
-    //! assert_eq!(datetime_julian.date.year().number, 1969);
-    //! assert_eq!(datetime_julian.date.month().ordinal, 12);
-    //! assert_eq!(datetime_julian.date.day_of_month().0, 20);
-    //! assert_eq!(datetime_julian.time.hour.number(), 13);
-    //! assert_eq!(datetime_julian.time.minute.number(), 1);
-    //! assert_eq!(datetime_julian.time.second.number(), 0);
-    //! ```
 
     use crate::any_calendar::AnyCalendarKind;
     use crate::calendar_arithmetic::{ArithmeticDate, CalendarArithmetic};
@@ -5801,29 +4335,14 @@ pub mod julian {
     use core::marker::PhantomData;
     use tinystr::tinystr;
 
-    // Julian epoch is equivalent to fixed_from_iso of December 30th of 0 year
-    // 1st Jan of 1st year Julian is equivalent to December 30th of 0th year of ISO year
     const JULIAN_EPOCH: i32 = -1;
 
-    /// The [Julian Calendar]
-    ///
-    /// The [Julian calendar] is a solar calendar that was used commonly historically, with twelve months.
-    ///
-    /// This type can be used with [`Date`] or [`DateTime`] to represent dates in this calendar.
-    ///
-    /// [Julian calendar]: https://en.wikipedia.org/wiki/Julian_calendar
-    ///
-    /// # Era codes
-    ///
-    /// This calendar supports two era codes: `"bc"`, and `"ad"`, corresponding to the BC and AD eras
     #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct Julian;
 
-    /// The inner date type used for representing [`Date`]s of [`Julian`]. See [`Date`] and [`Julian`] for more details.
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
-    // The inner date type used for representing Date<Julian>
     pub struct JulianDateInner(pub(crate) ArithmeticDate<Julian>);
 
     impl CalendarArithmetic for Julian {
@@ -5921,18 +4440,14 @@ pub mod julian {
             date1.0.until(date2.0, _largest_unit, _smallest_unit)
         }
 
-        /// The calendar-specific year represented by `date`
-        /// Julian has the same era scheme as Gregorian
         fn year(&self, date: &Self::DateInner) -> types::FormattableYear {
             crate::gregorian::year_as_gregorian(date.0.year)
         }
 
-        /// The calendar-specific month represented by `date`
         fn month(&self, date: &Self::DateInner) -> types::FormattableMonth {
             date.0.solar_month()
         }
 
-        /// The calendar-specific day-of-month represented by `date`
         fn day_of_month(&self, date: &Self::DateInner) -> types::DayOfMonth {
             date.0.day_of_month()
         }
@@ -5959,7 +4474,6 @@ pub mod julian {
     }
 
     impl Julian {
-        /// Construct a new Julian Calendar
         pub fn new() -> Self {
             Self
         }
@@ -5969,11 +4483,6 @@ pub mod julian {
             year % 4 == 0
         }
 
-        // "Fixed" is a day count representation of calendars staring from Jan 1st of year 1 of the Georgian Calendar.
-        // The fixed date algorithms are from
-        // Dershowitz, Nachum, and Edward M. Reingold. _Calendrical calculations_. Cambridge University Press, 2008.
-        //
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L1689-L1709
         pub(crate) const fn fixed_from_julian(date: ArithmeticDate<Julian>) -> i32 {
             let year = if date.year < 0 {
                 date.year + 1
@@ -6002,8 +4511,6 @@ pub mod julian {
             })
         }
 
-        /// Convenience function so we can call days_in_year without
-        /// needing to construct a full ArithmeticDate
         fn days_in_year_direct(year: i32) -> u32 {
             if Julian::is_leap_year(year) {
                 366
@@ -6012,7 +4519,6 @@ pub mod julian {
             }
         }
 
-        // Lisp code reference: https://github.com/EdReingold/calendar-code2/blob/1ee51ecfaae6f856b0d7de3e36e9042100b4f424/calendar.l#L1711-L1738
         fn julian_from_fixed(date: i32) -> JulianDateInner {
             let approx = quotient((4 * date) + 1464, 1461);
             let year = if approx <= 0 { approx - 1 } else { approx };
@@ -6033,20 +4539,6 @@ pub mod julian {
     }
 
     impl Date<Julian> {
-        /// Construct new Julian Date.
-        ///
-        /// Zero and negative years are in BC, with year 0 = 1 BC
-        ///
-        /// ```rust
-        /// use icu::calendar::Date;
-        ///
-        /// let date_julian = Date::try_new_julian_date(1969, 12, 20)
-        ///     .expect("Failed to initialize Julian Date instance.");
-        ///
-        /// assert_eq!(date_julian.year().number, 1969);
-        /// assert_eq!(date_julian.month().ordinal, 12);
-        /// assert_eq!(date_julian.day_of_month().0, 20);
-        /// ```
         pub fn try_new_julian_date(
             year: i32,
             month: u8,
@@ -6071,24 +4563,6 @@ pub mod julian {
     }
 
     impl DateTime<Julian> {
-        /// Construct a new Julian datetime from integers.
-        ///
-        /// Zero and negative years are in BC, with year 0 = 1 BC
-        ///
-        /// ```rust
-        /// use icu::calendar::DateTime;
-        ///
-        /// let datetime_julian =
-        ///     DateTime::try_new_julian_datetime(1969, 12, 20, 13, 1, 0)
-        ///         .expect("Failed to initialize Julian DateTime instance.");
-        ///
-        /// assert_eq!(datetime_julian.date.year().number, 1969);
-        /// assert_eq!(datetime_julian.date.month().ordinal, 12);
-        /// assert_eq!(datetime_julian.date.day_of_month().0, 20);
-        /// assert_eq!(datetime_julian.time.hour.number(), 13);
-        /// assert_eq!(datetime_julian.time.minute.number(), 1);
-        /// assert_eq!(datetime_julian.time.second.number(), 0);
-        /// ```
         pub fn try_new_julian_datetime(
             year: i32,
             month: u8,
@@ -6110,28 +4584,24 @@ pub mod julian {
 
         #[test]
         fn test_day_iso_to_julian() {
-            // March 1st 200 is same on both calendars
             let iso_date = Date::try_new_iso_date(200, 3, 1).unwrap();
             let julian_date = Julian.date_from_iso(iso_date);
             assert_eq!(julian_date.0.year, 200);
             assert_eq!(julian_date.0.month, 3);
             assert_eq!(julian_date.0.day, 1);
 
-            // Feb 28th, 200 (iso) = Feb 29th, 200 (julian)
             let iso_date = Date::try_new_iso_date(200, 2, 28).unwrap();
             let julian_date = Julian.date_from_iso(iso_date);
             assert_eq!(julian_date.0.year, 200);
             assert_eq!(julian_date.0.month, 2);
             assert_eq!(julian_date.0.day, 29);
 
-            // March 1st 400 (iso) = Feb 29th, 400 (julian)
             let iso_date = Date::try_new_iso_date(400, 3, 1).unwrap();
             let julian_date = Julian.date_from_iso(iso_date);
             assert_eq!(julian_date.0.year, 400);
             assert_eq!(julian_date.0.month, 2);
             assert_eq!(julian_date.0.day, 29);
 
-            // Jan 1st, 2022 (iso) = Dec 19, 2021 (julian)
             let iso_date = Date::try_new_iso_date(2022, 1, 1).unwrap();
             let julian_date = Julian.date_from_iso(iso_date);
             assert_eq!(julian_date.0.year, 2021);
@@ -6141,31 +4611,26 @@ pub mod julian {
 
         #[test]
         fn test_day_julian_to_iso() {
-            // March 1st 200 is same on both calendars
             let julian_date = Date::try_new_julian_date(200, 3, 1).unwrap();
             let iso_date = Julian.date_to_iso(julian_date.inner());
             let iso_expected_date = Date::try_new_iso_date(200, 3, 1).unwrap();
             assert_eq!(iso_date, iso_expected_date);
 
-            // Feb 28th, 200 (iso) = Feb 29th, 200 (julian)
             let julian_date = Date::try_new_julian_date(200, 2, 29).unwrap();
             let iso_date = Julian.date_to_iso(julian_date.inner());
             let iso_expected_date = Date::try_new_iso_date(200, 2, 28).unwrap();
             assert_eq!(iso_date, iso_expected_date);
 
-            // March 1st 400 (iso) = Feb 29th, 400 (julian)
             let julian_date = Date::try_new_julian_date(400, 2, 29).unwrap();
             let iso_date = Julian.date_to_iso(julian_date.inner());
             let iso_expected_date = Date::try_new_iso_date(400, 3, 1).unwrap();
             assert_eq!(iso_date, iso_expected_date);
 
-            // Jan 1st, 2022 (iso) = Dec 19, 2021 (julian)
             let julian_date = Date::try_new_julian_date(2021, 12, 19).unwrap();
             let iso_date = Julian.date_to_iso(julian_date.inner());
             let iso_expected_date = Date::try_new_iso_date(2022, 1, 1).unwrap();
             assert_eq!(iso_date, iso_expected_date);
 
-            // March 1st, 2022 (iso) = Feb 16, 2022 (julian)
             let julian_date = Date::try_new_julian_date(2022, 2, 16).unwrap();
             let iso_date = Julian.date_to_iso(julian_date.inner());
             let iso_expected_date = Date::try_new_iso_date(2022, 3, 1).unwrap();
@@ -6174,7 +4639,6 @@ pub mod julian {
 
         #[test]
         fn test_roundtrip_negative() {
-            // https://github.com/unicode-org/icu4x/issues/2254
             let iso_date = Date::try_new_iso_date(-1000, 3, 3).unwrap();
             let julian = iso_date.to_calendar(Julian::new());
             let recovered_iso = julian.to_iso();
@@ -6183,21 +4647,8 @@ pub mod julian {
     }
 }
 pub mod provider {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! 🚧 \[Unstable\] Data provider struct definitions for this ICU4X component.
-    //!
-    //! <div class="stab unstable">
-    //! 🚧 This code is considered unstable; it may change at any time, in breaking or non-breaking ways,
-    //! including in SemVer minor releases. While the serde representation of data structs is guaranteed
-    //! to be stable, their Rust representation might not be. Use with caution.
-    //! </div>
-    //!
-    //! Read more about data providers: [`icu_provider`]
 
-    // Provider structs must be stable
     #![allow(clippy::exhaustive_structs, clippy::exhaustive_enums)]
 
     use crate::types::IsoWeekday;
@@ -6206,15 +4657,6 @@ pub mod provider {
     use tinystr::TinyStr16;
     use zerovec::ZeroVec;
 
-    /// The date at which an era started
-    ///
-    /// The order of fields in this struct is important!
-    ///
-    /// <div class="stab unstable">
-    /// 🚧 This code is considered unstable; it may change at any time, in breaking or non-breaking ways,
-    /// including in SemVer minor releases. While the serde representation of data structs is guaranteed
-    /// to be stable, their Rust representation might not be. Use with caution.
-    /// </div>
     #[zerovec::make_ule(EraStartDateULE)]
     #[derive(
         Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Debug, yoke::Yokeable, zerofrom::ZeroFrom,
@@ -6226,22 +4668,11 @@ pub mod provider {
     )]
     #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
     pub struct EraStartDate {
-        /// The year the era started in
         pub year: i32,
-        /// The month the era started in
         pub month: u8,
-        /// The day the era started in
         pub day: u8,
     }
 
-    /// A data structure containing the necessary era data for constructing a
-    /// [`Japanese`](crate::japanese::Japanese) calendar object
-    ///
-    /// <div class="stab unstable">
-    /// 🚧 This code is considered unstable; it may change at any time, in breaking or non-breaking ways,
-    /// including in SemVer minor releases. While the serde representation of data structs is guaranteed
-    /// to be stable, their Rust representation might not be. Use with caution.
-    /// </div>
     #[icu_provider::data_struct(
         marker(JapaneseErasV1Marker, "calendar/japanese@1"),
         marker(JapaneseExtendedErasV1Marker, "calendar/japanext@1")
@@ -6254,7 +4685,6 @@ pub mod provider {
     )]
     #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
     pub struct JapaneseErasV1<'data> {
-        /// A map from era start dates to their era codes
         #[cfg_attr(feature = "serde", serde(borrow))]
         pub dates_to_eras: ZeroVec<'data, (EraStartDate, TinyStr16)>,
     }
@@ -6278,14 +4708,6 @@ pub mod provider {
         }
     }
 
-    /// An ICU4X mapping to a subset of CLDR weekData.
-    /// See CLDR-JSON's weekData.json for more context.
-    ///
-    /// <div class="stab unstable">
-    /// 🚧 This code is considered unstable; it may change at any time, in breaking or non-breaking ways,
-    /// including in SemVer minor releases. While the serde representation of data structs is guaranteed
-    /// to be stable, their Rust representation might not be. Use with caution.
-    /// </div>
     #[icu_provider::data_struct(marker(
         WeekDataV1Marker,
         "datetime/week_data@1",
@@ -6300,18 +4722,12 @@ pub mod provider {
     #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
     #[allow(clippy::exhaustive_structs)] // used in data provider
     pub struct WeekDataV1 {
-        /// The first day of a week.
         pub first_weekday: IsoWeekday,
-        /// For a given week, the minimum number of that week's days present in a given month or year for the week to be considered part of that month or year.
         pub min_week_days: u8,
     }
 }
 pub mod types {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
-    //! This module contains various types used by `icu_calendar` and `icu_datetime`
 
     use crate::error::CalendarError;
     use crate::helpers;
@@ -6323,10 +4739,6 @@ pub mod types {
     use zerovec::maps::ZeroMapKV;
     use zerovec::ule::AsULE;
 
-    /// The era of a particular date
-    ///
-    /// Different calendars use different era codes, see their documentation
-    /// for details.
     #[derive(Copy, Clone, Debug, PartialEq)]
     #[allow(clippy::exhaustive_structs)] // this is a newtype
     pub struct Era(pub TinyStr16);
@@ -6344,32 +4756,17 @@ pub mod types {
         }
     }
 
-    /// Representation of a formattable year.
-    ///
-    /// More fields may be added in the future, for things like
-    /// the cyclic or extended year
     #[derive(Copy, Clone, Debug, PartialEq)]
     #[non_exhaustive]
     pub struct FormattableYear {
-        /// The era containing the year.
         pub era: Era,
 
-        /// The year number in the current era (usually 1-based).
         pub number: i32,
 
-        /// The related ISO year. This is normally the ISO (proleptic Gregorian) year having the greatest
-        /// overlap with the calendar year. It is used in certain date formatting patterns.
-        ///
-        /// Can be None if the calendar does not typically use related_iso (and CLDR does not contain patterns
-        /// using it)
         pub related_iso: Option<i32>,
     }
 
     impl FormattableYear {
-        /// Construct a new Year given an era and number
-        ///
-        /// Other fields can be set mutably after construction
-        /// as needed
         pub fn new(era: Era, number: i32) -> Self {
             Self {
                 era,
@@ -6379,12 +4776,6 @@ pub mod types {
         }
     }
 
-    /// Representation of a month in a year
-    ///
-    /// Month codes typically look like `M01`, `M02`, etc, but can handle leap months
-    /// (`M03L`) in lunar calendars. Solar calendars will have codes between `M01` and `M12`
-    /// potentially with an `M13` for epagomenal months. Check the docs for a particular calendar
-    /// for details on what its month codes are.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[allow(clippy::exhaustive_structs)] // this is a newtype
     #[cfg_attr(
@@ -6430,54 +4821,36 @@ pub mod types {
         }
     }
 
-    /// Representation of a formattable month.
     #[derive(Copy, Clone, Debug, PartialEq)]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct FormattableMonth {
-        /// The month number in this given year. For calendars with leap months, all months after
-        /// the leap month will end up with an incremented number.
-        ///
-        /// In general, prefer using the month code in generic code.
         pub ordinal: u32,
 
-        /// The month code, used to distinguish months during leap years.
         pub code: MonthCode,
     }
 
-    /// A struct containing various details about the position of the day within a year. It is returned
-    // by the [`day_of_year_info()`](trait.DateInput.html#tymethod.day_of_year_info) method of the
-    // [`DateInput`] trait.
     #[derive(Copy, Clone, Debug, PartialEq)]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct DayOfYearInfo {
-        /// The current day of the year, 1-based.
         pub day_of_year: u32,
-        /// The number of days in a year.
         pub days_in_year: u32,
-        /// The previous year.
         pub prev_year: FormattableYear,
-        /// The number of days in the previous year.
         pub days_in_prev_year: u32,
-        /// The next year.
         pub next_year: FormattableYear,
     }
 
-    /// A day number in a month. Usually 1-based.
     #[allow(clippy::exhaustive_structs)] // this is a newtype
     #[derive(Clone, Copy, Debug, PartialEq)]
     pub struct DayOfMonth(pub u32);
 
-    /// A week number in a month. Usually 1-based.
     #[derive(Clone, Copy, Debug, PartialEq)]
     #[allow(clippy::exhaustive_structs)] // this is a newtype
     pub struct WeekOfMonth(pub u32);
 
-    /// A week number in a year. Usually 1-based.
     #[derive(Clone, Copy, Debug, PartialEq)]
     #[allow(clippy::exhaustive_structs)] // this is a newtype
     pub struct WeekOfYear(pub u32);
 
-    /// A day of week in month. 1-based.
     #[derive(Clone, Copy, Debug, PartialEq)]
     #[allow(clippy::exhaustive_structs)] // this is a newtype
     pub struct DayOfWeekInMonth(pub u32);
@@ -6495,10 +4868,6 @@ pub mod types {
         assert_eq!(DayOfWeekInMonth::from(DayOfMonth(8)).0, 2);
     }
 
-    /// This macro defines a struct for 0-based date fields: hours, minutes, seconds
-    /// and fractional seconds. Each unit is bounded by a range. The traits implemented
-    /// here will return a Result on whether or not the unit is in range from the given
-    /// input.
     macro_rules! dt_unit {
         ($name:ident, $storage:ident, $value:expr, $docs:expr) => {
             #[doc=$docs]
@@ -6506,12 +4875,10 @@ pub mod types {
             pub struct $name($storage);
 
             impl $name {
-                /// Gets the numeric value for this component.
                 pub const fn number(self) -> $storage {
                     self.0
                 }
 
-                /// Creates a new value at 0.
                 pub const fn zero() -> $name {
                     Self(0)
                 }
@@ -6576,9 +4943,6 @@ pub mod types {
             }
 
             impl $name {
-                /// Attempts to add two values.
-                /// Returns `Some` if the sum is within bounds.
-                /// Returns `None` if the sum is out of bounds.
                 pub fn try_add(self, other: $storage) -> Option<Self> {
                     let sum = self.0.saturating_add(other);
                     if sum > $value {
@@ -6588,9 +4952,6 @@ pub mod types {
                     }
                 }
 
-                /// Attempts to subtract two values.
-                /// Returns `Some` if the difference is within bounds.
-                /// Returns `None` if the difference is out of bounds.
                 pub fn try_sub(self, other: $storage) -> Option<Self> {
                     self.0.checked_sub(other).map(Self)
                 }
@@ -6632,7 +4993,6 @@ pub mod types {
         const HOUR_VALUE: u8 = 5;
         let hour = IsoHour(HOUR_VALUE);
 
-        // middle of bounds
         assert_eq!(
             hour.try_add(HOUR_VALUE - 1),
             Some(IsoHour(HOUR_VALUE + (HOUR_VALUE - 1)))
@@ -6642,11 +5002,9 @@ pub mod types {
             Some(IsoHour(HOUR_VALUE - (HOUR_VALUE - 1)))
         );
 
-        // edge of bounds
         assert_eq!(hour.try_add(HOUR_MAX - HOUR_VALUE), Some(IsoHour(HOUR_MAX)));
         assert_eq!(hour.try_sub(HOUR_VALUE), Some(IsoHour(0)));
 
-        // out of bounds
         assert_eq!(hour.try_add(1 + HOUR_MAX - HOUR_VALUE), None);
         assert_eq!(hour.try_sub(1 + HOUR_VALUE), None);
     }
@@ -6657,7 +5015,6 @@ pub mod types {
         const MINUTE_VALUE: u8 = 5;
         let minute = IsoMinute(MINUTE_VALUE);
 
-        // middle of bounds
         assert_eq!(
             minute.try_add(MINUTE_VALUE - 1),
             Some(IsoMinute(MINUTE_VALUE + (MINUTE_VALUE - 1)))
@@ -6667,14 +5024,12 @@ pub mod types {
             Some(IsoMinute(MINUTE_VALUE - (MINUTE_VALUE - 1)))
         );
 
-        // edge of bounds
         assert_eq!(
             minute.try_add(MINUTE_MAX - MINUTE_VALUE),
             Some(IsoMinute(MINUTE_MAX))
         );
         assert_eq!(minute.try_sub(MINUTE_VALUE), Some(IsoMinute(0)));
 
-        // out of bounds
         assert_eq!(minute.try_add(1 + MINUTE_MAX - MINUTE_VALUE), None);
         assert_eq!(minute.try_sub(1 + MINUTE_VALUE), None);
     }
@@ -6685,7 +5040,6 @@ pub mod types {
         const SECOND_VALUE: u8 = 5;
         let second = IsoSecond(SECOND_VALUE);
 
-        // middle of bounds
         assert_eq!(
             second.try_add(SECOND_VALUE - 1),
             Some(IsoSecond(SECOND_VALUE + (SECOND_VALUE - 1)))
@@ -6695,14 +5049,12 @@ pub mod types {
             Some(IsoSecond(SECOND_VALUE - (SECOND_VALUE - 1)))
         );
 
-        // edge of bounds
         assert_eq!(
             second.try_add(SECOND_MAX - SECOND_VALUE),
             Some(IsoSecond(SECOND_MAX))
         );
         assert_eq!(second.try_sub(SECOND_VALUE), Some(IsoSecond(0)));
 
-        // out of bounds
         assert_eq!(second.try_add(1 + SECOND_MAX - SECOND_VALUE), None);
         assert_eq!(second.try_sub(1 + SECOND_VALUE), None);
     }
@@ -6713,7 +5065,6 @@ pub mod types {
         const NANO_SECOND_VALUE: u32 = 5;
         let nano_second = NanoSecond(NANO_SECOND_VALUE);
 
-        // middle of bounds
         assert_eq!(
             nano_second.try_add(NANO_SECOND_VALUE - 1),
             Some(NanoSecond(NANO_SECOND_VALUE + (NANO_SECOND_VALUE - 1)))
@@ -6723,14 +5074,12 @@ pub mod types {
             Some(NanoSecond(NANO_SECOND_VALUE - (NANO_SECOND_VALUE - 1)))
         );
 
-        // edge of bounds
         assert_eq!(
             nano_second.try_add(NANO_SECOND_MAX - NANO_SECOND_VALUE),
             Some(NanoSecond(NANO_SECOND_MAX))
         );
         assert_eq!(nano_second.try_sub(NANO_SECOND_VALUE), Some(NanoSecond(0)));
 
-        // out of bounds
         assert_eq!(
             nano_second.try_add(1 + NANO_SECOND_MAX - NANO_SECOND_VALUE),
             None
@@ -6738,25 +5087,19 @@ pub mod types {
         assert_eq!(nano_second.try_sub(1 + NANO_SECOND_VALUE), None);
     }
 
-    /// A representation of a time in hours, minutes, seconds, and nanoseconds
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct Time {
-        /// 0-based hour.
         pub hour: IsoHour,
 
-        /// 0-based minute.
         pub minute: IsoMinute,
 
-        /// 0-based second.
         pub second: IsoSecond,
 
-        /// Fractional second
         pub nanosecond: NanoSecond,
     }
 
     impl Time {
-        /// Construct a new [`Time`], without validating that all components are in range
         pub const fn new(
             hour: IsoHour,
             minute: IsoMinute,
@@ -6771,7 +5114,6 @@ pub mod types {
             }
         }
 
-        /// Construct a new [`Time`], whilst validating that all components are in range
         pub fn try_new(
             hour: u8,
             minute: u8,
@@ -6786,8 +5128,6 @@ pub mod types {
             })
         }
 
-        /// Takes a number of minutes, which could be positive or negative, and returns the Time
-        /// and the day number, which could be positive or negative.
         pub(crate) fn from_minute_with_remainder_days(minute: i32) -> (Time, i32) {
             let (extra_days, minute_in_day) = helpers::div_rem_euclid(minute, 1440);
             let (hours, minutes) = (minute_in_day / 60, minute_in_day % 60);
@@ -6934,18 +5274,6 @@ pub mod types {
         }
     }
 
-    /// A weekday in a 7-day week, according to ISO-8601.
-    ///
-    /// The discriminant values correspond to ISO-8601 weekday numbers (Monday = 1, Sunday = 7).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use icu::calendar::types::IsoWeekday;
-    ///
-    /// assert_eq!(1, IsoWeekday::Monday as usize);
-    /// assert_eq!(7, IsoWeekday::Sunday as usize);
-    /// ```
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     #[allow(missing_docs)] // The weekday variants should be self-obvious.
     #[repr(i8)]
@@ -6967,19 +5295,6 @@ pub mod types {
     }
 
     impl From<usize> for IsoWeekday {
-        /// Convert from an ISO-8601 weekday number to an [`IsoWeekday`] enum. 0 is automatically converted
-        /// to 7 (Sunday). If the number is out of range, it is interpreted modulo 7.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use icu::calendar::types::IsoWeekday;
-        ///
-        /// assert_eq!(IsoWeekday::Sunday, IsoWeekday::from(0));
-        /// assert_eq!(IsoWeekday::Monday, IsoWeekday::from(1));
-        /// assert_eq!(IsoWeekday::Sunday, IsoWeekday::from(7));
-        /// assert_eq!(IsoWeekday::Monday, IsoWeekday::from(8));
-        /// ```
         fn from(input: usize) -> Self {
             let mut ordinal = (input % 7) as i8;
             if ordinal == 0 {
@@ -6990,9 +5305,6 @@ pub mod types {
     }
 }
 mod week_of {
-    // This file is part of ICU4X. For terms of use, please see the file
-    // called LICENSE at the top level of the ICU4X source tree
-    // (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 
     use crate::{
         error::CalendarError,
@@ -7001,17 +5313,12 @@ mod week_of {
     };
     use icu_provider::prelude::*;
 
-    /// Minimum number of days in a month unit required for using this module
     pub const MIN_UNIT_DAYS: u16 = 14;
 
-    /// Calculator for week-of-month and week-of-year based on locale-specific configurations.
     #[derive(Clone, Copy, Debug)]
     #[non_exhaustive]
     pub struct WeekCalculator {
-        /// The first day of a week.
         pub first_weekday: IsoWeekday,
-        /// For a given week, the minimum number of that week's days present in a given month or year
-        /// for the week to be considered part of that month or year.
         pub min_week_days: u8,
     }
 
@@ -7034,12 +5341,6 @@ mod week_of {
     }
 
     impl WeekCalculator {
-        /// Creates a new [`WeekCalculator`] from locale data.
-        ///
-        /// [📚 Help choosing a constructor](icu_provider::constructors)
-        /// <div class="stab unstable">
-        /// ⚠️ The bounds on this function may change over time, including in SemVer minor releases.
-        /// </div>
         pub fn try_new_unstable<P>(provider: &P, locale: &DataLocale) -> Result<Self, CalendarError>
         where
             P: DataProvider<crate::provider::WeekDataV1Marker>,
@@ -7060,33 +5361,6 @@ mod week_of {
             error: CalendarError
         );
 
-        /// Returns the week of month according to a calendar with min_week_days = 1.
-        ///
-        /// This is different from what the UTS35 spec describes [1] but the latter is
-        /// missing a month of week-of-month field so following the spec would result
-        /// in inconsistencies (e.g. in the ISO calendar 2021-01-01 is the last week
-        /// of December but 'MMMMW' would have it formatted as 'week 5 of January').
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use icu_calendar::types::{DayOfMonth, IsoWeekday, WeekOfMonth};
-        /// use icu_calendar::week::WeekCalculator;
-        ///
-        /// let week_calculator = WeekCalculator::try_new_unstable(
-        ///     &icu_testdata::unstable(),
-        ///     &icu_locid::locale!("en-GB").into(),
-        /// )
-        /// .expect("Data exists");
-        ///
-        /// // Wednesday the 10th is in week 2:
-        /// assert_eq!(
-        ///     WeekOfMonth(2),
-        ///     week_calculator.week_of_month(DayOfMonth(10), IsoWeekday::Wednesday)
-        /// );
-        /// ```
-        ///
-        /// [1]: https://www.unicode.org/reports/tr35/tr35-55/tr35-dates.html#Date_Patterns_Week_Of_Year
         pub fn week_of_month(
             &self,
             day_of_month: DayOfMonth,
@@ -7097,34 +5371,6 @@ mod week_of {
             )
         }
 
-        /// Returns the week of year according to the weekday and [`DayOfYearInfo`].
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use icu_calendar::types::{DayOfMonth, IsoWeekday};
-        /// use icu_calendar::week::{RelativeUnit, WeekCalculator, WeekOf};
-        /// use icu_calendar::Date;
-        ///
-        /// let week_calculator = WeekCalculator::try_new_unstable(
-        ///     &icu_testdata::unstable(),
-        ///     &icu_locid::locale!("en-GB").into(),
-        /// )
-        /// .expect("Data exists");
-        ///
-        /// let iso_date = Date::try_new_iso_date(2022, 8, 26).unwrap();
-        ///
-        /// // Friday August 26 is in week 34 of year 2022:
-        /// assert_eq!(
-        ///     WeekOf {
-        ///         unit: RelativeUnit::Current,
-        ///         week: 34
-        ///     },
-        ///     week_calculator
-        ///         .week_of_year(iso_date.day_of_year_info(), IsoWeekday::Friday)
-        ///         .unwrap()
-        /// );
-        /// ```
         pub fn week_of_year(
             &self,
             day_of_year_info: DayOfYearInfo,
@@ -7139,7 +5385,6 @@ mod week_of {
             )
         }
 
-        /// Returns the zero based index of `weekday` vs this calendar's start of week.
         fn weekday_index(&self, weekday: IsoWeekday) -> i8 {
             (7 + (weekday as i8) - (self.first_weekday as i8)) % 7
         }
@@ -7154,35 +5399,25 @@ mod week_of {
         }
     }
 
-    /// Returns the weekday that's `num_days` after `weekday`.
     fn add_to_weekday(weekday: IsoWeekday, num_days: i32) -> IsoWeekday {
         let new_weekday = (7 + (weekday as i32) + (num_days % 7)) % 7;
         IsoWeekday::from(new_weekday as usize)
     }
 
-    /// Which year or month that a calendar assigns a week to relative to the year/month
-    /// the week is in.
     #[derive(Clone, Copy, Debug, PartialEq)]
     #[allow(clippy::enum_variant_names)]
     enum RelativeWeek {
-        /// A week that is assigned to the last week of the previous year/month. e.g. 2021-01-01 is week 54 of 2020 per the ISO calendar.
         LastWeekOfPreviousUnit,
-        /// A week that's assigned to the current year/month. The offset is 1-based. e.g. 2021-01-11 is week 2 of 2021 per the ISO calendar so would be WeekOfCurrentUnit(2).
         WeekOfCurrentUnit(u16),
-        /// A week that is assigned to the first week of the next year/month. e.g. 2019-12-31 is week 1 of 2020 per the ISO calendar.
         FirstWeekOfNextUnit,
     }
 
-    /// Information about a year or month.
     struct UnitInfo {
-        /// The weekday of this year/month's first day.
         first_day: IsoWeekday,
-        /// The number of days in this year/month.
         duration_days: u16,
     }
 
     impl UnitInfo {
-        /// Creates a UnitInfo for a given year or month.
         fn new(first_day: IsoWeekday, duration_days: u16) -> Result<UnitInfo, CalendarError> {
             if duration_days < MIN_UNIT_DAYS {
                 return Err(CalendarError::Underflow {
@@ -7196,10 +5431,6 @@ mod week_of {
             })
         }
 
-        /// Returns the start of this unit's first week.
-        ///
-        /// The returned value can be negative if this unit's first week started during the previous
-        /// unit.
         fn first_week_offset(&self, calendar: &WeekCalculator) -> i8 {
             let first_day_index = calendar.weekday_index(self.first_day);
             if 7 - first_day_index >= calendar.min_week_days as i8 {
@@ -7209,7 +5440,6 @@ mod week_of {
             }
         }
 
-        /// Returns the number of weeks in this unit according to `calendar`.
         fn num_weeks(&self, calendar: &WeekCalculator) -> u16 {
             let first_week_offset = self.first_week_offset(calendar);
             let num_days_including_first_week =
@@ -7221,7 +5451,6 @@ mod week_of {
             ((num_days_including_first_week + 7 - (calendar.min_week_days as i32)) / 7) as u16
         }
 
-        /// Returns the week number for the given day in this unit.
         fn relative_week(&self, calendar: &WeekCalculator, day: u16) -> RelativeWeek {
             let days_since_first_week =
                 i32::from(day) - i32::from(self.first_week_offset(calendar)) - 1;
@@ -7237,36 +5466,21 @@ mod week_of {
         }
     }
 
-    /// The year or month that a calendar assigns a week to relative to the year/month that it is in.
     #[derive(Debug, PartialEq)]
     #[allow(clippy::exhaustive_enums)] // this type is stable
     pub enum RelativeUnit {
-        /// A week that is assigned to previous year/month. e.g. 2021-01-01 is week 54 of 2020 per the ISO calendar.
         Previous,
-        /// A week that's assigned to the current year/month. e.g. 2021-01-11 is week 2 of 2021 per the ISO calendar.
         Current,
-        /// A week that is assigned to the next year/month. e.g. 2019-12-31 is week 1 of 2020 per the ISO calendar.
         Next,
     }
 
-    /// The week number assigned to a given week according to a calendar.
     #[derive(Debug, PartialEq)]
     #[allow(clippy::exhaustive_structs)] // this type is stable
     pub struct WeekOf {
-        /// Week of month/year. 1 based.
         pub week: u16,
-        /// The month/year that this week is in, relative to the month/year of the input date.
         pub unit: RelativeUnit,
     }
 
-    /// Computes & returns the week of given month/year according to `calendar`.
-    ///
-    /// # Arguments
-    ///  - calendar: Calendar information used to compute the week number.
-    ///  - num_days_in_previous_unit: The number of days in the preceding month/year.
-    ///  - num_days_in_unit: The number of days in the month/year.
-    ///  - day: 1-based day of month/year.
-    ///  - week_day: The weekday of `day`..
     pub fn week_of(
         calendar: &WeekCalculator,
         num_days_in_previous_unit: u16,
@@ -7275,7 +5489,6 @@ mod week_of {
         week_day: IsoWeekday,
     ) -> Result<WeekOf, CalendarError> {
         let current = UnitInfo::new(
-            // The first day of this month/year is (day - 1) days from `day`.
             add_to_weekday(week_day, 1 - i32::from(day)),
             num_days_in_unit,
         )?;
@@ -7303,16 +5516,6 @@ mod week_of {
         }
     }
 
-    /// Computes & returns the week of given month or year according to a calendar with min_week_days = 1.
-    ///
-    /// Does not know anything about the unit size (month or year), and will just assume the date falls
-    /// within whatever unit that is being considered. In other words, this function returns strictly increasing
-    /// values as `day` increases, unlike [`week_of()`] which is cyclic.
-    ///
-    /// # Arguments
-    ///  - first_weekday: The first day of a week.
-    ///  - day: 1-based day of the month or year.
-    ///  - week_day: The weekday of `day`.
     pub fn simple_week_of(first_weekday: IsoWeekday, day: u16, week_day: IsoWeekday) -> u16 {
         let calendar = WeekCalculator {
             first_weekday,
@@ -7322,8 +5525,6 @@ mod week_of {
         #[allow(clippy::unwrap_used)] // week_of should can't fail with MIN_UNIT_DAYS
         week_of(
             &calendar,
-            // The duration of the previous unit does not influence the result if min_week_days = 1
-            // so we only need to use a valid value.
             MIN_UNIT_DAYS,
             u16::MAX,
             day,
@@ -7393,23 +5594,19 @@ mod week_of {
 
         #[test]
         fn test_num_weeks() -> Result<(), CalendarError> {
-            // 4 days in first & last week.
             assert_eq!(
                 UnitInfo::new(IsoWeekday::Thursday, 4 + 2 * 7 + 4)?.num_weeks(&ISO_CALENDAR),
                 4
             );
-            // 3 days in first week, 4 in last week.
             assert_eq!(
                 UnitInfo::new(IsoWeekday::Friday, 3 + 2 * 7 + 4)?.num_weeks(&ISO_CALENDAR),
                 3
             );
-            // 3 days in first & last week.
             assert_eq!(
                 UnitInfo::new(IsoWeekday::Friday, 3 + 2 * 7 + 3)?.num_weeks(&ISO_CALENDAR),
                 2
             );
 
-            // 1 day in first & last week.
             assert_eq!(
                 UnitInfo::new(IsoWeekday::Saturday, 1 + 2 * 7 + 1)?.num_weeks(&US_CALENDAR),
                 4
@@ -7417,11 +5614,6 @@ mod week_of {
             Ok(())
         }
 
-        /// Uses enumeration & bucketing to assign each day of a month or year `unit` to a week.
-        ///
-        /// This alternative implementation serves as an exhaustive safety check
-        /// of relative_week() (in addition to the manual test points used
-        /// for testing week_of()).
         fn classify_days_of_unit(calendar: &WeekCalculator, unit: &UnitInfo) -> Vec<RelativeWeek> {
             let mut weeks: Vec<Vec<IsoWeekday>> = Vec::new();
             for day_index in 0..unit.duration_days {
@@ -7518,7 +5710,6 @@ mod week_of {
                 }
             );
 
-            // First day of year is a Thursday.
             assert_eq!(
                 week_of_month_from_iso_date(&ISO_CALENDAR, 20180101)?,
                 WeekOf {
@@ -7526,7 +5717,6 @@ mod week_of {
                     unit: RelativeUnit::Current,
                 }
             );
-            // First day of year is a Friday.
             assert_eq!(
                 week_of_month_from_iso_date(&ISO_CALENDAR, 20210101)?,
                 WeekOf {
@@ -7535,7 +5725,6 @@ mod week_of {
                 }
             );
 
-            // The month ends on a Wednesday.
             assert_eq!(
                 week_of_month_from_iso_date(&ISO_CALENDAR, 20200930)?,
                 WeekOf {
@@ -7543,7 +5732,6 @@ mod week_of {
                     unit: RelativeUnit::Next,
                 }
             );
-            // The month ends on a Thursday.
             assert_eq!(
                 week_of_month_from_iso_date(&ISO_CALENDAR, 20201231)?,
                 WeekOf {
@@ -7552,7 +5740,6 @@ mod week_of {
                 }
             );
 
-            // US calendar always assigns the week to the current month. 2020-12-31 is a Thursday.
             assert_eq!(
                 week_of_month_from_iso_date(&US_CALENDAR, 20201231)?,
                 WeekOf {
@@ -7574,7 +5761,6 @@ mod week_of {
 
     #[test]
     fn test_simple_week_of() {
-        // The 1st is a Monday and the week starts on Mondays.
         assert_eq!(
             simple_week_of(IsoWeekday::Monday, 2, IsoWeekday::Tuesday),
             1
@@ -7582,7 +5768,6 @@ mod week_of {
         assert_eq!(simple_week_of(IsoWeekday::Monday, 7, IsoWeekday::Sunday), 1);
         assert_eq!(simple_week_of(IsoWeekday::Monday, 8, IsoWeekday::Monday), 2);
 
-        // The 1st is a Wednesday and the week starts on Tuesdays.
         assert_eq!(
             simple_week_of(IsoWeekday::Tuesday, 1, IsoWeekday::Wednesday),
             1
@@ -7596,7 +5781,6 @@ mod week_of {
             2
         );
 
-        // The 1st is a Monday and the week starts on Sundays.
         assert_eq!(
             simple_week_of(IsoWeekday::Sunday, 26, IsoWeekday::Friday),
             4
@@ -7605,7 +5789,6 @@ mod week_of {
 }
 
 pub mod week {
-    //! Functions for week-of-month and week-of-year arithmetic.
     use crate::week_of;
     pub use week_of::RelativeUnit;
     pub use week_of::WeekCalculator;
@@ -7622,6 +5805,5 @@ pub use error::CalendarError;
 pub use gregorian::Gregorian;
 pub use iso::Iso;
 
-/// Re-export of [`CalendarError`].
 #[doc(no_inline)]
 pub use CalendarError as Error;
