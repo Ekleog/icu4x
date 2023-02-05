@@ -19,17 +19,13 @@ mod date {
     impl<C: Calendar> AsCalendar for C {
         type Calendar = C;
         #[inline]
-        fn as_calendar(&self) -> &Self {
-            self
-        }
+        fn as_calendar(&self) -> &Self { loop {} }
     }
 
     impl<C: Calendar> AsCalendar for Rc<C> {
         type Calendar = C;
         #[inline]
-        fn as_calendar(&self) -> &C {
-            self
-        }
+        fn as_calendar(&self) -> &C { loop {} }
     }
 
     impl<C: Calendar> AsCalendar for Arc<C> {
@@ -81,33 +77,19 @@ mod date {
             month_code: types::MonthCode,
             day: u8,
             calendar: A,
-        ) -> Result<Self, CalendarError> {
-            let inner = calendar
-                .as_calendar()
-                .date_from_codes(era, year, month_code, day)?;
-            Ok(Date { inner, calendar })
-        }
+        ) -> Result<Self, CalendarError> { loop {} }
 
         #[inline]
-        pub fn new_from_iso(iso: Date<Iso>, calendar: A) -> Self {
-            let inner = calendar.as_calendar().date_from_iso(iso);
-            Date { inner, calendar }
-        }
+        pub fn new_from_iso(iso: Date<Iso>, calendar: A) -> Self { loop {} }
 
         #[inline]
-        pub fn to_iso(&self) -> Date<Iso> {
-            self.calendar.as_calendar().date_to_iso(self.inner())
-        }
+        pub fn to_iso(&self) -> Date<Iso> { loop {} }
 
         #[inline]
-        pub fn to_calendar<A2: AsCalendar>(&self, calendar: A2) -> Date<A2> {
-            Date::new_from_iso(self.to_iso(), calendar)
-        }
+        pub fn to_calendar<A2: AsCalendar>(&self, calendar: A2) -> Date<A2> { loop {} }
 
         #[inline]
-        pub fn months_in_year(&self) -> u8 {
-            self.calendar.as_calendar().months_in_year(self.inner())
-        }
+        pub fn months_in_year(&self) -> u8 { loop {} }
 
         #[inline]
         pub fn days_in_year(&self) -> u32 {
@@ -146,15 +128,7 @@ mod date {
             other: &Date<B>,
             largest_unit: DateDurationUnit,
             smallest_unit: DateDurationUnit,
-        ) -> DateDuration<A::Calendar> {
-            self.calendar.as_calendar().until(
-                self.inner(),
-                other.inner(),
-                other.calendar.as_calendar(),
-                largest_unit,
-                smallest_unit,
-            )
-        }
+        ) -> DateDuration<A::Calendar> { loop {} }
 
         #[inline]
         pub fn year(&self) -> types::FormattableYear {
@@ -228,23 +202,11 @@ mod date {
     impl<A: AsCalendar> Eq for Date<A> {}
 
     impl<A: AsCalendar> fmt::Debug for Date<A> {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-            write!(
-                f,
-                "Date({:?}, for calendar {})",
-                self.inner,
-                self.calendar.as_calendar().debug_name()
-            )
-        }
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> { loop {} }
     }
 
     impl<A: AsCalendar + Clone> Clone for Date<A> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-                calendar: self.calendar.clone(),
-            }
-        }
+        fn clone(&self) -> Self { loop {} }
     }
 
     impl<A> Copy for Date<A>
