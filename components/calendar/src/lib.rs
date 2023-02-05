@@ -1156,101 +1156,30 @@ pub mod ethiopian {
             date.0.day_of_month()
         }
 
-        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo {
-            let prev_year = date.0.year - 1;
-            let next_year = date.0.year + 1;
-            types::DayOfYearInfo {
-                day_of_year: date.0.day_of_year(),
-                days_in_year: date.0.days_in_year(),
-                prev_year: Self::year_as_ethiopian(prev_year, self.0),
-                days_in_prev_year: Ethiopian::days_in_year_direct(prev_year),
-                next_year: Self::year_as_ethiopian(next_year, self.0),
-            }
-        }
+        fn day_of_year_info(&self, date: &Self::DateInner) -> types::DayOfYearInfo { loop {} }
 
-        fn debug_name(&self) -> &'static str {
-            "Ethiopian"
-        }
+        fn debug_name(&self) -> &'static str { loop {} }
 
-        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> {
-            if self.0 {
-                Some(AnyCalendarKind::EthiopianAmeteAlem)
-            } else {
-                Some(AnyCalendarKind::Ethiopian)
-            }
-        }
+        fn any_calendar_kind(&self) -> Option<AnyCalendarKind> { loop {} }
     }
 
     const ETHIOPIC_TO_COPTIC_OFFSET: i32 =
         super::coptic::COPTIC_EPOCH - Julian::fixed_from_julian_integers(8, 8, 29);
 
     impl Ethiopian {
-        pub fn new() -> Self {
-            Self(false)
-        }
-        pub fn new_with_era_style(era_style: EthiopianEraStyle) -> Self {
-            Self(era_style == EthiopianEraStyle::AmeteAlem)
-        }
-        pub fn set_era_style(&mut self, era_style: EthiopianEraStyle) {
-            self.0 = era_style == EthiopianEraStyle::AmeteAlem
-        }
+        pub fn new() -> Self { loop {} }
+        pub fn new_with_era_style(era_style: EthiopianEraStyle) -> Self { loop {} }
+        pub fn set_era_style(&mut self, era_style: EthiopianEraStyle) { loop {} }
 
-        pub fn era_style(&self) -> EthiopianEraStyle {
-            if self.0 {
-                EthiopianEraStyle::AmeteAlem
-            } else {
-                EthiopianEraStyle::AmeteMihret
-            }
-        }
+        pub fn era_style(&self) -> EthiopianEraStyle { loop {} }
 
-        fn fixed_from_ethiopian(date: ArithmeticDate<Ethiopian>) -> i32 {
-            Coptic::fixed_from_coptic_integers(date.year, date.month, date.day)
-                - ETHIOPIC_TO_COPTIC_OFFSET
-        }
+        fn fixed_from_ethiopian(date: ArithmeticDate<Ethiopian>) -> i32 { loop {} }
 
-        fn ethiopian_from_fixed(date: i32) -> EthiopianDateInner {
-            let coptic_date = Coptic::coptic_from_fixed(date + ETHIOPIC_TO_COPTIC_OFFSET);
+        fn ethiopian_from_fixed(date: i32) -> EthiopianDateInner { loop {} }
 
-            #[allow(clippy::unwrap_used)]
-            *Date::try_new_ethiopian_date(
-                EthiopianEraStyle::AmeteMihret,
-                coptic_date.0.year,
-                coptic_date.0.month,
-                coptic_date.0.day,
-            )
-            .unwrap()
-            .inner()
-        }
+        fn days_in_year_direct(year: i32) -> u32 { loop {} }
 
-        fn days_in_year_direct(year: i32) -> u32 {
-            if Ethiopian::is_leap_year(year) {
-                366
-            } else {
-                365
-            }
-        }
-
-        fn year_as_ethiopian(year: i32, amete_alem: bool) -> types::FormattableYear {
-            if amete_alem {
-                types::FormattableYear {
-                    era: types::Era(tinystr!(16, "mundi")),
-                    number: year + AMETE_ALEM_OFFSET,
-                    related_iso: None,
-                }
-            } else if year > 0 {
-                types::FormattableYear {
-                    era: types::Era(tinystr!(16, "incar")),
-                    number: year,
-                    related_iso: None,
-                }
-            } else {
-                types::FormattableYear {
-                    era: types::Era(tinystr!(16, "pre-incar")),
-                    number: 1 - year,
-                    related_iso: None,
-                }
-            }
-        }
+        fn year_as_ethiopian(year: i32, amete_alem: bool) -> types::FormattableYear { loop {} }
     }
 
     impl Date<Ethiopian> {
@@ -1259,27 +1188,7 @@ pub mod ethiopian {
             mut year: i32,
             month: u8,
             day: u8,
-        ) -> Result<Date<Ethiopian>, CalendarError> {
-            if era_style == EthiopianEraStyle::AmeteAlem {
-                year -= AMETE_ALEM_OFFSET;
-            }
-            let inner = ArithmeticDate {
-                year,
-                month,
-                day,
-                marker: PhantomData,
-            };
-
-            let bound = inner.days_in_month();
-            if day > bound {
-                return Err(CalendarError::OutOfRange);
-            }
-
-            Ok(Date::from_raw(
-                EthiopianDateInner(inner),
-                Ethiopian::new_with_era_style(era_style),
-            ))
-        }
+        ) -> Result<Date<Ethiopian>, CalendarError> { loop {} }
     }
 
     impl DateTime<Ethiopian> {
@@ -1291,49 +1200,7 @@ pub mod ethiopian {
             hour: u8,
             minute: u8,
             second: u8,
-        ) -> Result<DateTime<Ethiopian>, CalendarError> {
-            Ok(DateTime {
-                date: Date::try_new_ethiopian_date(era_style, year, month, day)?,
-                time: types::Time::try_new(hour, minute, second, 0)?,
-            })
-        }
-    }
-
-    #[cfg(test)]
-    mod test {
-        use super::*;
-
-        #[test]
-        fn test_leap_year() {
-            let iso_date = Date::try_new_iso_date(2023, 9, 11).unwrap();
-            let ethiopian_date = Ethiopian::new().date_from_iso(iso_date);
-            assert_eq!(ethiopian_date.0.year, 2015);
-            assert_eq!(ethiopian_date.0.month, 13);
-            assert_eq!(ethiopian_date.0.day, 6);
-        }
-
-        #[test]
-        fn test_iso_to_ethiopian_conversion_and_back() {
-            let iso_date = Date::try_new_iso_date(1970, 1, 2).unwrap();
-            let date_ethiopian = Date::new_from_iso(iso_date, Ethiopian::new());
-
-            assert_eq!(date_ethiopian.inner.0.year, 1962);
-            assert_eq!(date_ethiopian.inner.0.month, 4);
-            assert_eq!(date_ethiopian.inner.0.day, 24);
-
-            assert_eq!(
-                date_ethiopian.to_iso(),
-                Date::try_new_iso_date(1970, 1, 2).unwrap()
-            );
-        }
-
-        #[test]
-        fn test_roundtrip_negative() {
-            let iso_date = Date::try_new_iso_date(-1000, 3, 3).unwrap();
-            let ethiopian = iso_date.to_calendar(Ethiopian::new());
-            let recovered_iso = ethiopian.to_iso();
-            assert_eq!(iso_date, recovered_iso);
-        }
+        ) -> Result<DateTime<Ethiopian>, CalendarError> { loop {} }
     }
 }
 mod fuzz {
