@@ -1503,7 +1503,6 @@ dependencies = [
  "criterion",
  "databake",
  "displaydoc",
- "icu",
  "icu_benchmark_macros",
  "icu_locid",
  "icu_provider",
