@@ -36,7 +36,7 @@ mod date {
         }
     }
 
-    #[allow(clippy::exhaustive_structs)] // newtype
+    #[allow(clippy::exhaustive_structs)] 
     #[derive(PartialEq, Eq, Debug)]
     pub struct Ref<'a, C>(pub &'a C);
 
@@ -225,7 +225,7 @@ mod datetime {
     use alloc::sync::Arc;
 
     #[derive(Debug)]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct DateTime<A: AsCalendar> {
         pub date: Date<A>,
         pub time: Time,
@@ -610,7 +610,7 @@ pub mod buddhist {
 
     #[derive(Copy, Clone, Debug, Default)]
 
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
     pub struct Buddhist;
 
@@ -636,7 +636,7 @@ pub mod buddhist {
 
         fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>) { loop {} }
 
-        #[allow(clippy::field_reassign_with_default)] // it's more clear this way
+        #[allow(clippy::field_reassign_with_default)] 
         fn until(
             &self,
             date1: &Self::DateInner,
@@ -705,10 +705,10 @@ mod calendar {
             self.date_to_iso(date).day_of_week()
         }
 
-        #[doc(hidden)] // unstable
+        #[doc(hidden)] 
         fn offset_date(&self, date: &mut Self::DateInner, offset: DateDuration<Self>);
 
-        #[doc(hidden)] // unstable
+        #[doc(hidden)] 
         fn until(
             &self,
             date1: &Self::DateInner,
@@ -741,7 +741,7 @@ mod calendar_arithmetic {
     use tinystr::tinystr;
 
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct ArithmeticDate<C: CalendarArithmetic> {
         pub year: i32,
         pub month: u8,
@@ -823,7 +823,7 @@ pub mod coptic {
 
     #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct Coptic;
 
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
@@ -925,7 +925,7 @@ mod duration {
     use core::marker::PhantomData;
 
     #[derive(Copy, Clone, Eq, PartialEq)]
-    #[allow(clippy::exhaustive_structs)] // this type should be stable (and is intended to be constructed manually)
+    #[allow(clippy::exhaustive_structs)] 
     pub struct DateDuration<C: Calendar + ?Sized> {
         pub years: i32,
         pub months: i32,
@@ -935,7 +935,7 @@ mod duration {
     }
 
     #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-    #[allow(clippy::exhaustive_enums)] // this type should be stable
+    #[allow(clippy::exhaustive_enums)] 
     pub enum DateDurationUnit {
         Years,
         Months,
@@ -1260,7 +1260,7 @@ pub mod indian {
 
     #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct Indian;
 
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
@@ -1547,7 +1547,7 @@ pub mod iso {
 
     #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct Iso;
 
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
@@ -1647,7 +1647,7 @@ pub mod iso {
                     _ => unreachable!(),
                 }
             };
-            let january_1_2000 = 5; // Saturday
+            let january_1_2000 = 5; 
             let day_offset = (january_1_2000 + year_offset + month_offset + date.0.day as i32) % 7;
 
             types::IsoWeekday::from((day_offset + 1) as usize)
@@ -1749,7 +1749,7 @@ pub mod iso {
 
         pub fn from_minutes_since_local_unix_epoch(minute: i32) -> DateTime<Iso> {
             let (time, extra_days) = types::Time::from_minute_with_remainder_days(minute);
-            #[allow(clippy::unwrap_used)] // constant date
+            #[allow(clippy::unwrap_used)] 
             let unix_epoch = DateTime::try_new_iso_datetime(1970, 1, 1, 0, 0, 0).unwrap();
             let unix_epoch_days = Iso::fixed_from_iso(*unix_epoch.date.inner());
             let date = Iso::iso_from_fixed(unix_epoch_days + extra_days);
@@ -1809,14 +1809,14 @@ pub mod iso {
                 if day <= month_days {
                     break;
                 } else {
-                    debug_assert!(month < 12); // don't try going to month 13
+                    debug_assert!(month < 12); 
                     day -= month_days;
                     month += 1;
                 }
             }
-            let day = day as u8; // day <= month_days < u8::MAX
+            let day = day as u8; 
 
-            #[allow(clippy::unwrap_used)] // month in 1..=12, day <= month_days
+            #[allow(clippy::unwrap_used)] 
             Date::try_new_iso_date(year, month, day).unwrap()
         }
 
@@ -1840,14 +1840,14 @@ pub mod iso {
         }
 
         fn iso_new_year(year: i32) -> i32 {
-            #[allow(clippy::unwrap_used)] // valid day and month
+            #[allow(clippy::unwrap_used)] 
             Self::fixed_from_iso_integers(year, 1, 1).unwrap()
         }
 
         pub(crate) fn iso_from_fixed(date: i32) -> Date<Iso> {
             let year = Self::iso_year_from_fixed(date);
             let prior_days = date - Self::iso_new_year(year);
-            #[allow(clippy::unwrap_used)] // valid day and month
+            #[allow(clippy::unwrap_used)] 
             let correction = if date < Self::fixed_from_iso_integers(year, 3, 1).unwrap() {
                 0
             } else if Self::is_leap_year(year) {
@@ -1855,16 +1855,16 @@ pub mod iso {
             } else {
                 2
             };
-            let month = quotient(12 * (prior_days + correction) + 373, 367) as u8; // in 1..12 < u8::MAX
-            #[allow(clippy::unwrap_used)] // valid day and month
-            let day = (date - Self::fixed_from_iso_integers(year, month, 1).unwrap() + 1) as u8; // <= days_in_month < u8::MAX
-            #[allow(clippy::unwrap_used)] // valid day and month
+            let month = quotient(12 * (prior_days + correction) + 373, 367) as u8; 
+            #[allow(clippy::unwrap_used)] 
+            let day = (date - Self::fixed_from_iso_integers(year, month, 1).unwrap() + 1) as u8; 
+            #[allow(clippy::unwrap_used)] 
             Date::try_new_iso_date(year, month, day).unwrap()
         }
 
         pub(crate) fn day_of_year(date: IsoDateInner) -> u32 {
             let month_offset = [0, 1, -1, 0, 0, 1, 1, 2, 3, 3, 4, 4];
-            #[allow(clippy::indexing_slicing)] // date.0.month in 1..=12
+            #[allow(clippy::indexing_slicing)] 
             let mut offset = month_offset[date.0.month as usize - 1];
             if Self::is_leap_year(date.0.year) && date.0.month > 2 {
                 offset += 1;
@@ -2061,7 +2061,7 @@ pub mod iso {
                 );
             }
             check(-1828, -5, 12, 30);
-            check(-1827, -5, 12, 31); // leap year
+            check(-1827, -5, 12, 31); 
             check(-1826, -4, 1, 1);
             check(-1462, -4, 12, 30);
             check(-1461, -4, 12, 31);
@@ -2072,7 +2072,7 @@ pub mod iso {
             check(-730, -1, 1, 1);
             check(-367, -1, 12, 30);
             check(-366, -1, 12, 31);
-            check(-365, 0, 1, 1); // leap year
+            check(-365, 0, 1, 1); 
             check(-364, 0, 1, 2);
             check(-1, 0, 12, 30);
             check(0, 0, 12, 31);
@@ -2083,7 +2083,7 @@ pub mod iso {
             check(366, 2, 1, 1);
             check(1459, 4, 12, 29);
             check(1460, 4, 12, 30);
-            check(1461, 4, 12, 31); // leap year
+            check(1461, 4, 12, 31); 
             check(1462, 5, 1, 1);
         }
 
@@ -2418,7 +2418,7 @@ pub mod japanese {
     }
 
     impl DateTime<Japanese> {
-        #[allow(clippy::too_many_arguments)] // it's more convenient to have this many arguments
+        #[allow(clippy::too_many_arguments)] 
         pub fn try_new_japanese_datetime<A: AsCalendar<Calendar = Japanese>>(
             era: types::Era,
             year: i32,
@@ -2437,7 +2437,7 @@ pub mod japanese {
     }
 
     impl DateTime<JapaneseExtended> {
-        #[allow(clippy::too_many_arguments)] // it's more convenient to have this many arguments
+        #[allow(clippy::too_many_arguments)] 
         pub fn try_new_japanese_extended_datetime<A: AsCalendar<Calendar = JapaneseExtended>>(
             era: types::Era,
             year: i32,
@@ -2555,7 +2555,7 @@ pub mod japanese {
             if let Some(year) = era.split('-').nth(1) {
                 if let Ok(ref int) = year.parse::<i32>() {
                     if let Ok(index) = data.binary_search_by(|(d, _)| d.year.cmp(int)) {
-                        #[allow(clippy::expect_used)] // see expect message
+                        #[allow(clippy::expect_used)] 
                         let (era_start, code) = data
                             .get(index)
                             .expect("Indexing from successful binary search must succeed");
@@ -2806,7 +2806,7 @@ pub mod julian {
 
     #[derive(Copy, Clone, Debug, Hash, Default, Eq, PartialEq)]
     #[cfg_attr(test, derive(bolero::generator::TypeGenerator))]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct Julian;
 
     #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
@@ -2985,10 +2985,10 @@ pub mod julian {
             } else {
                 2
             };
-            let month = quotient(12 * (prior_days + correction) + 373, 367) as u8; // this expression is in 1..=12
-            let day = (date - Self::fixed_from_julian_integers(year, month, 1) + 1) as u8; // as days_in_month is < u8::MAX
+            let month = quotient(12 * (prior_days + correction) + 373, 367) as u8; 
+            let day = (date - Self::fixed_from_julian_integers(year, month, 1) + 1) as u8; 
 
-            #[allow(clippy::unwrap_used)] // day and month have the correct bounds
+            #[allow(clippy::unwrap_used)] 
             *Date::try_new_julian_date(year, month, day).unwrap().inner()
         }
     }
@@ -3175,7 +3175,7 @@ pub mod provider {
         databake(path = icu_calendar::provider),
     )]
     #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
-    #[allow(clippy::exhaustive_structs)] // used in data provider
+    #[allow(clippy::exhaustive_structs)] 
     pub struct WeekDataV1 {
         pub first_weekday: IsoWeekday,
         pub min_week_days: u8,
@@ -3195,7 +3195,7 @@ pub mod types {
     use zerovec::ule::AsULE;
 
     #[derive(Copy, Clone, Debug, PartialEq)]
-    #[allow(clippy::exhaustive_structs)] // this is a newtype
+    #[allow(clippy::exhaustive_structs)] 
     pub struct Era(pub TinyStr16);
 
     impl From<TinyStr16> for Era {
@@ -3232,7 +3232,7 @@ pub mod types {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[allow(clippy::exhaustive_structs)] // this is a newtype
+    #[allow(clippy::exhaustive_structs)] 
     #[cfg_attr(
         feature = "datagen",
         derive(serde::Serialize, databake::Bake),
@@ -3277,7 +3277,7 @@ pub mod types {
     }
 
     #[derive(Copy, Clone, Debug, PartialEq)]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct FormattableMonth {
         pub ordinal: u32,
 
@@ -3285,7 +3285,7 @@ pub mod types {
     }
 
     #[derive(Copy, Clone, Debug, PartialEq)]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct DayOfYearInfo {
         pub day_of_year: u32,
         pub days_in_year: u32,
@@ -3294,20 +3294,20 @@ pub mod types {
         pub next_year: FormattableYear,
     }
 
-    #[allow(clippy::exhaustive_structs)] // this is a newtype
+    #[allow(clippy::exhaustive_structs)] 
     #[derive(Clone, Copy, Debug, PartialEq)]
     pub struct DayOfMonth(pub u32);
 
     #[derive(Clone, Copy, Debug, PartialEq)]
-    #[allow(clippy::exhaustive_structs)] // this is a newtype
+    #[allow(clippy::exhaustive_structs)] 
     pub struct WeekOfMonth(pub u32);
 
     #[derive(Clone, Copy, Debug, PartialEq)]
-    #[allow(clippy::exhaustive_structs)] // this is a newtype
+    #[allow(clippy::exhaustive_structs)] 
     pub struct WeekOfYear(pub u32);
 
     #[derive(Clone, Copy, Debug, PartialEq)]
-    #[allow(clippy::exhaustive_structs)] // this is a newtype
+    #[allow(clippy::exhaustive_structs)] 
     pub struct DayOfWeekInMonth(pub u32);
 
     impl From<DayOfMonth> for DayOfWeekInMonth {
@@ -3393,7 +3393,7 @@ pub mod types {
 
 
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-    #[allow(clippy::exhaustive_structs)] // this type is stable
+    #[allow(clippy::exhaustive_structs)] 
     pub struct Time {
         pub hour: IsoHour,
 
@@ -3424,7 +3424,7 @@ pub mod types {
 
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    #[allow(missing_docs)] // The weekday variants should be self-obvious.
+    #[allow(missing_docs)] 
     #[repr(i8)]
     #[cfg_attr(
         feature = "datagen",
@@ -3432,7 +3432,7 @@ pub mod types {
         databake(path = icu_calendar::types),
     )]
     #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
-    #[allow(clippy::exhaustive_enums)] // This is stable
+    #[allow(clippy::exhaustive_enums)] 
     pub enum IsoWeekday {
         Monday = 1,
         Tuesday,
