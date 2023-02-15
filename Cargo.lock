@@ -1391,8 +1391,6 @@ name = "icu_calendar"
 version = "1.1.0"
 dependencies = [
  "icu_provider",
- "tinystr 0.7.1",
- "zerovec",
 ]
 
 [[package]]

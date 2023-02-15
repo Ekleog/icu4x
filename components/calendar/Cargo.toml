@@ -27,9 +27,7 @@ include = [
 all-features = true
 
 [dependencies]
-icu_provider = { version = "1.1.0", path = "../../provider/core", features = ["macros"] }
-tinystr = { version = "0.7.1", path = "../../utils/tinystr", features = ["alloc", "zerovec"], default-features = false }
-zerovec = { version = "0.9.2", path = "../../utils/zerovec", default-features = false, features = ["derive"] }
+icu_provider = { version = "1.1.0", path = "../../provider/core", default-features = false }
 
 [features]
 std = []
