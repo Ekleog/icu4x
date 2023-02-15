@@ -6,20 +6,12 @@ mod any {
     use yoke::trait_hack::YokeTraitHack;
     use yoke::Yokeable;
     use zerofrom::ZeroFrom;
-    #[cfg(feature = "sync")]
-    #[cfg(feature = "sync")]
-    trait MaybeSendSync: Send + Sync {}
-    #[cfg(not(feature = "sync"))]
     trait MaybeSendSync {}
-    #[cfg(not(feature = "sync"))]
     impl<T> MaybeSendSync for T {}
     #[derive(Debug, Clone)]
     enum AnyPayloadInner {
         StructRef(&'static dyn Any),
-        #[cfg(not(feature = "sync"))]
         PayloadRc(SelectedRc<dyn Any>),
-        #[cfg(feature = "sync")]
-        PayloadRc,
     }
     #[derive(Debug, Clone, Yokeable)]
     struct AnyPayload {
