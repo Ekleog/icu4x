@@ -18,7 +18,6 @@ mod any {
         inner: AnyPayloadInner,
         type_name: &'static str,
     }
-    #[allow(clippy::exhaustive_structs)]
     struct AnyMarker;
     impl DataMarker for AnyMarker {
         type Yokeable = AnyPayload;
@@ -28,7 +27,6 @@ mod any {
         M: DataMarker + 'static,
         M::Yokeable: MaybeSendSync,
     {
-        #[inline]
         fn upcast(other: DataPayload<M>) -> DataPayload<AnyMarker> {
             loop {}
         }
@@ -62,7 +60,6 @@ mod any {
     }
     impl TryFrom<DataResponse<AnyMarker>> for AnyResponse {
         type Error = DataError;
-        #[inline]
         fn try_from(other: DataResponse<AnyMarker>) -> Result<Self, Self::Error> {
             Ok(Self {
                 metadata: other.metadata,
@@ -131,7 +128,6 @@ mod key {
     use core::ops::Deref;
     use writeable::{LengthHint, };
     use zerovec::ule::*;
-    #[repr(transparent)]
     struct DataKeyHash([u8; 4]);
     enum FallbackPriority {
         Language,
@@ -157,7 +153,6 @@ mod key {
         fallback_supplement: Option<FallbackSupplement>,
     }
     impl Default for DataKeyMetadata {
-        #[inline]
         fn default() -> Self {
             loop {}
         }
@@ -195,8 +190,6 @@ mod response {
     use crate::request::DataLocale;
     use crate::yoke::*;
     use alloc::rc::Rc as SelectedRc;
-    #[cfg(feature = "sync")]
-    use alloc::sync::Arc as SelectedRc;
     use core::convert::TryFrom;
     use core::marker::PhantomData;
     use core::ops::Deref;
@@ -246,7 +239,5 @@ mod prelude {
     pub use crate::response::DataResponse;
     pub use crate::response::DataResponseMetadata;
     pub use yoke;
-    #[cfg(feature = "serde")]
-    use AsDeserializingBufferProvider;
 }
 pub use prelude::*;
