@@ -31,17 +31,6 @@ mod any {
             loop {}
         }
     }
-    impl AnyPayload {
-        fn downcast<M>(self) -> Result<DataPayload<M>, DataError>
-        where
-            M: DataMarker + 'static,
-            M::Yokeable: ZeroFrom<'static, M::Yokeable>,
-            M::Yokeable: MaybeSendSync,
-            for<'a> YokeTraitHack<<M::Yokeable as Yokeable<'a>>::Output>: Clone,
-        {
-            loop {}
-        }
-    }
     impl<M> DataPayload<M>
     where
         M: DataMarker + 'static,
