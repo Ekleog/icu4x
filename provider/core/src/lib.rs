@@ -97,56 +97,6 @@ mod dynutil {
             loop {}
         }
     }
-    macro_rules! impl_dynamic_data_provider {
-        (:, $arms:tt, , ) => {
-            ::!;
-            ::!(
-                ,
-                ,
-                $($rest),+
-            );
-        };
-        (, { $( = : => $struct_m:ty),+, }, ) => {
-            impl ::<> for
-            {
-                fn  -> <
-                    ::<>,
-                    ::,
-                > {
-                    match . {
-                        $(
-                             => {
-                                let : ::<> =
-                                    ::::<>::?;
-                                (:: {
-                                    : .,
-                                    : ..(|| {
-                                        ::dynutil::UpcastDataPayload::<$struct_m>::upcast(p)
-                                    }),
-                                })
-                            }
-                        )+,
-                        _ =>
-                    }
-                }
-            }
-        };
-        (, [ $($struct_m:ident),+, ], ) => {
-            impl ::<> for
-            {
-                fn  -> <
-                    ::<>,
-                    ::,
-                > {
-                    #!
-                    $(
-                        const $struct_m: $crate::DataKeyHash = $struct_m::KEY.hashed();
-                    )+
-                    match .
-                }
-            }
-        };
-    }
 }
 mod error {
     use crate::buf::BufferFormat;
@@ -189,15 +139,6 @@ mod key {
     use core::ops::Deref;
     use writeable::{LengthHint, };
     use zerovec::ule::*;
-    macro_rules! tagged {
-        ($without_tags:expr) => {
-            concat!(
-                $crate::leading_tag!(),
-                $without_tags,
-                $crate::trailing_tag!()
-            )
-        };
-    }
     #[repr(transparent)]
     struct DataKeyHash([u8; 4]);
     enum FallbackPriority {
