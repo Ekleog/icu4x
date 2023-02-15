@@ -1,7 +1,6 @@
 extern crate alloc;
 mod any {
     use crate::prelude::*;
-    #[cfg(not(feature = "sync"))]
     use alloc::rc::Rc as SelectedRc;
     use core::any::Any;
     use yoke::trait_hack::YokeTraitHack;
@@ -65,18 +64,6 @@ mod any {
             }
         }
     }
-    impl DataPayload<AnyMarker> {
-        fn downcast<M>(self) -> Result<DataPayload<M>, DataError>
-        where
-            M: DataMarker + 'static,
-            for<'a> YokeTraitHack<<M::Yokeable as Yokeable<'a>>::Output>: Clone,
-            M::Yokeable: ZeroFrom<'static, M::Yokeable>,
-            M::Yokeable: MaybeSendSync,
-        {
-            self.try_unwrap_owned()?.downcast()
-        }
-    }
-    #[allow(clippy::exhaustive_structs)]
     struct AnyResponse {
         metadata: DataResponseMetadata,
         payload: Option<AnyPayload>,
@@ -88,20 +75,6 @@ mod any {
             Ok(Self {
                 metadata: other.metadata,
                 payload: other.payload.map(|p| p.try_unwrap_owned()).transpose()?,
-            })
-        }
-    }
-    impl AnyResponse {
-        fn downcast<M>(self) -> Result<DataResponse<M>, DataError>
-        where
-            M: DataMarker + 'static,
-            for<'a> YokeTraitHack<<M::Yokeable as Yokeable<'a>>::Output>: Clone,
-            M::Yokeable: ZeroFrom<'static, M::Yokeable>,
-            M::Yokeable: MaybeSendSync,
-        {
-            Ok(DataResponse {
-                metadata: self.metadata,
-                payload: self.payload.map(|p| p.downcast()).transpose()?,
             })
         }
     }
@@ -125,7 +98,7 @@ mod dynutil {
         }
     }
     macro_rules! impl_dynamic_data_provider {
-        (:ty, $arms:tt, , ) => {
+        (:, $arms:tt, , ) => {
             ::!;
             ::!(
                 ,
@@ -214,7 +187,7 @@ mod error {
 }
 mod key {
     use core::ops::Deref;
-    use writeable::{LengthHint, Writeable};
+    use writeable::{LengthHint, };
     use zerovec::ule::*;
     macro_rules! tagged {
         ($without_tags:expr) => {
@@ -225,7 +198,6 @@ mod key {
             )
         };
     }
-
     #[repr(transparent)]
     struct DataKeyHash([u8; 4]);
     enum FallbackPriority {
@@ -243,12 +215,6 @@ mod key {
     }
     impl DataKeyPath {
         const fn get(self) -> &'static str {
-            loop {}
-        }
-    }
-    impl Deref for DataKeyPath {
-        type Target = str;
-        fn deref(&self) -> &Self::Target {
             loop {}
         }
     }
@@ -313,7 +279,6 @@ mod response {
         yoke: Yoke<M::Yokeable, Option<Cart>>,
     }
     struct Cart(SelectedRc<Box<[u8]>>);
-
     impl<M> DataPayload<M>
     where
         M: DataMarker,
