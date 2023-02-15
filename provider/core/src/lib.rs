@@ -13,7 +13,7 @@ mod any {
         StructRef(&'static dyn Any),
         PayloadRc(SelectedRc<dyn Any>),
     }
-    #[derive(Debug, Clone, Yokeable)]
+    #[derive(Debug, Clone)]
     struct AnyPayload {
         inner: AnyPayloadInner,
         type_name: &'static str,
