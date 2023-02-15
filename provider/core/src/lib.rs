@@ -190,7 +190,7 @@ mod response {
     where
         M: DataMarker,
     {
-        yoke: Yoke<M::Yokeable, Option<Cart>>,
+        _foo: PhantomData<M>,
     }
     struct Cart(SelectedRc<Box<[u8]>>);
     impl<M> DataPayload<M>
@@ -200,13 +200,9 @@ mod response {
         pub fn try_unwrap_owned(self) -> Result<M::Yokeable, DataError> {
             loop {}
         }
-        fn try_map_project<M2, F, E>(self, f: F) -> Result<DataPayload<M2>, E>
+        fn try_map_project<M2, F, E>(self, f: impl Sized) -> Result<DataPayload<M2>, E>
         where
             M2: DataMarker,
-            F: for<'a> FnOnce(
-                <M::Yokeable as Yokeable<'a>>::Output,
-                PhantomData<&'a ()>,
-            ) -> Result<<M2::Yokeable as Yokeable<'a>>::Output, E>,
         {
             loop {}
         }
