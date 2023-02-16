@@ -1,18 +1,14 @@
 mod any {
     use crate::prelude::*;
-    enum AnyPayloadInner {
-        StructRef,
-        PayloadRc,
-    }
     pub struct AnyPayload;
     struct AnyMarker;
     struct AnyResponse {
         metadata: DataResponseMetadata,
         payload: Option<AnyPayload>,
     }
-    impl TryFrom<DataResponse<AnyMarker>> for AnyResponse {
+    impl TryFrom<DataResponse> for AnyResponse {
         type Error = DataError;
-        fn try_from(other: DataResponse<AnyMarker>) -> Result<Self, Self::Error> {
+        fn try_from(other: DataResponse) -> Result<Self, Self::Error> {
             Ok(Self {
                 metadata: other.metadata,
                 payload: other.payload.map(|p| p.try_unwrap_owned()).transpose()?,
@@ -49,15 +45,13 @@ mod response {
     use crate::error::{DataError, };
     use core::marker::PhantomData;
     pub struct DataResponseMetadata;
-    pub struct DataPayload<M> {
-        _foo: PhantomData<M>,
-    }
-    impl<M> DataPayload<M> {
+    pub struct DataPayload;
+    impl DataPayload {
         pub fn try_unwrap_owned(self) -> Result<crate::any::AnyPayload, DataError> {loop{}}
     }
-    pub struct DataResponse<M> {
+    pub struct DataResponse {
         pub metadata: DataResponseMetadata,
-        pub payload: Option<DataPayload<M>>,
+        pub payload: Option<DataPayload>,
     }
 }
 mod prelude {
