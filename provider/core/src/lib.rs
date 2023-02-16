@@ -100,27 +100,6 @@ mod error {
     }
 }
 mod key {
-    use core::ops::Deref;
-    use writeable::{LengthHint, };
-    struct DataKeyHash([u8; 4]);
-    enum FallbackPriority {
-        Language,
-        Region,
-        Collation,
-    }
-    #[derive(Debug, PartialEq, Eq, Copy, Clone, PartialOrd)]
-    enum FallbackSupplement {
-        Collation,
-    }
-    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
-    struct DataKeyPath {
-        tagged: &'static str,
-    }
-    struct DataKeyMetadata {
-        fallback_priority: FallbackPriority,
-        extension_key: Option<icu_locid::extensions::unicode::Key>,
-        fallback_supplement: Option<FallbackSupplement>,
-    }
     pub struct DataKey;
 }
 mod marker {
