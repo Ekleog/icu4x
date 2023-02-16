@@ -1,40 +1,11 @@
-extern crate alloc;
 mod any {
     use crate::prelude::*;
-    use alloc::rc::Rc as SelectedRc;
-    use core::any::Any;
-    use yoke::trait_hack::YokeTraitHack;
-    use yoke::Yokeable;
-    use zerofrom::ZeroFrom;
-    trait MaybeSendSync {}
-    impl<T> MaybeSendSync for T {}
-    #[derive(Debug, Clone)]
     enum AnyPayloadInner {
-        StructRef(&'static dyn Any),
-        PayloadRc(SelectedRc<dyn Any>),
+        StructRef,
+        PayloadRc,
     }
-    #[derive(Debug, Clone)]
-    pub struct AnyPayload {
-        inner: AnyPayloadInner,
-        type_name: &'static str,
-    }
+    pub struct AnyPayload;
     struct AnyMarker;
-    impl DataMarker for AnyMarker {
-        type Yokeable = AnyPayload;
-    }
-    impl<M> crate::dynutil::UpcastDataPayload<M> for AnyMarker {
-        fn upcast(other: DataPayload<M>) -> DataPayload<AnyMarker> {
-            loop {}
-        }
-    }
-    impl<M> DataPayload<M> {
-        fn wrap_into_any_payload(self) -> AnyPayload {
-            AnyPayload {
-                inner: { loop {} },
-                type_name: core::any::type_name::<M>(),
-            }
-        }
-    }
     struct AnyResponse {
         metadata: DataResponseMetadata,
         payload: Option<AnyPayload>,
@@ -49,27 +20,9 @@ mod any {
         }
     }
 }
-mod buf {
-    #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-    pub enum BufferFormat {
-        Json,
-        Bincode1,
-        Postcard1,
-    }
-}
-mod dynutil {
-    pub trait UpcastDataPayload<M>: Sized {
-        fn upcast(other: crate::DataPayload<M>) -> crate::DataPayload<Self> {
-            loop {}
-        }
-    }
-}
 mod error {
-    use crate::buf::BufferFormat;
     use crate::prelude::*;
-    use displaydoc::Display;
-    #[derive(Clone, Copy, Eq, PartialEq)]
-    pub enum DataErrorKind {
+     enum DataErrorKind {
         MissingDataKey,
         MissingLocale,
         NeedsLocale,
@@ -81,7 +34,7 @@ mod error {
         Custom,
         Io(std::io::ErrorKind),
         MissingSourceData,
-        UnavailableBufferFormat(BufferFormat),
+        UnavailableBufferFormat,
     }
     pub struct DataError {
         kind: DataErrorKind,
@@ -92,45 +45,15 @@ mod error {
 mod key {
     pub struct DataKey;
 }
-mod marker {
-    use yoke::Yokeable;
-    pub trait DataMarker {
-        type Yokeable;
-    }
-}
-mod request {
-    use core::fmt;
-    use icu_locid::extensions::unicode as unicode_ext;
-    use icu_locid::{LanguageIdentifier, Locale, SubtagOrderingResult};
-    #[derive(PartialEq, Clone, Default, Eq, Hash)]
-    pub struct DataLocale;
-    impl fmt::Debug for DataLocale {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            loop {}
-        }
-    }
-}
 mod response {
-    use crate::error::{DataError, DataErrorKind};
-    use crate::marker::DataMarker;
-    use crate::request::DataLocale;
-    use crate::yoke::*;
-    use alloc::rc::Rc as SelectedRc;
-    use core::convert::TryFrom;
+    use crate::error::{DataError, };
     use core::marker::PhantomData;
-    use core::ops::Deref;
-    #[derive(Debug, Clone, PartialEq, Default)]
     pub struct DataResponseMetadata;
     pub struct DataPayload<M> {
         _foo: PhantomData<M>,
     }
     impl<M> DataPayload<M> {
-        pub fn try_unwrap_owned(self) -> Result<crate::any::AnyPayload, DataError> {
-            loop {}
-        }
-        fn try_map_project<M2, F, E>(self, f: impl Sized) -> Result<DataPayload<M2>, E> {
-            loop {}
-        }
+        pub fn try_unwrap_owned(self) -> Result<crate::any::AnyPayload, DataError> {loop{}}
     }
     pub struct DataResponse<M> {
         pub metadata: DataResponseMetadata,
@@ -140,8 +63,6 @@ mod response {
 mod prelude {
     pub use crate::error::DataError;
     pub use crate::key::DataKey;
-    pub use crate::marker::DataMarker;
-    pub use crate::response::DataPayload;
     pub use crate::response::DataResponse;
     pub use crate::response::DataResponseMetadata;
     pub use yoke;
