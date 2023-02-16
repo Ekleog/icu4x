@@ -14,7 +14,7 @@ mod any {
         PayloadRc(SelectedRc<dyn Any>),
     }
     #[derive(Debug, Clone)]
-    struct AnyPayload {
+    pub struct AnyPayload {
         inner: AnyPayloadInner,
         type_name: &'static str,
     }
@@ -22,20 +22,12 @@ mod any {
     impl DataMarker for AnyMarker {
         type Yokeable = AnyPayload;
     }
-    impl<M> crate::dynutil::UpcastDataPayload<M> for AnyMarker
-    where
-        M: DataMarker + 'static,
-        M::Yokeable: MaybeSendSync,
-    {
+    impl<M> crate::dynutil::UpcastDataPayload<M> for AnyMarker {
         fn upcast(other: DataPayload<M>) -> DataPayload<AnyMarker> {
             loop {}
         }
     }
-    impl<M> DataPayload<M>
-    where
-        M: DataMarker + 'static,
-        M::Yokeable: MaybeSendSync,
-    {
+    impl<M> DataPayload<M> {
         fn wrap_into_any_payload(self) -> AnyPayload {
             AnyPayload {
                 inner: { loop {} },
@@ -66,12 +58,10 @@ mod buf {
     }
 }
 mod dynutil {
-    pub trait UpcastDataPayload<M>
-    where
-        M: crate::DataMarker,
-        Self: Sized + crate::DataMarker,
-    {
-        fn upcast(other: crate::DataPayload<M>) -> crate::DataPayload<Self> {loop{}}
+    pub trait UpcastDataPayload<M>: Sized {
+        fn upcast(other: crate::DataPayload<M>) -> crate::DataPayload<Self> {
+            loop {}
+        }
     }
 }
 mod error {
@@ -115,7 +105,9 @@ mod request {
     #[derive(PartialEq, Clone, Default, Eq, Hash)]
     pub struct DataLocale;
     impl fmt::Debug for DataLocale {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {loop{}}
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            loop {}
+        }
     }
 }
 mod response {
@@ -129,26 +121,18 @@ mod response {
     use core::ops::Deref;
     #[derive(Debug, Clone, PartialEq, Default)]
     pub struct DataResponseMetadata;
-    pub struct DataPayload<M>
-    where
-        M: DataMarker,
-    {
+    pub struct DataPayload<M> {
         _foo: PhantomData<M>,
     }
-    impl<M> DataPayload<M>
-    where
-        M: DataMarker,
-    {
-        pub fn try_unwrap_owned(self) -> Result<M::Yokeable, DataError> {loop{}}
-        fn try_map_project<M2, F, E>(self, f: impl Sized) -> Result<DataPayload<M2>, E>
-        where
-            M2: DataMarker,
-        {loop{}}
+    impl<M> DataPayload<M> {
+        pub fn try_unwrap_owned(self) -> Result<crate::any::AnyPayload, DataError> {
+            loop {}
+        }
+        fn try_map_project<M2, F, E>(self, f: impl Sized) -> Result<DataPayload<M2>, E> {
+            loop {}
+        }
     }
-    pub struct DataResponse<M>
-    where
-        M: DataMarker,
-    {
+    pub struct DataResponse<M> {
         pub metadata: DataResponseMetadata,
         pub payload: Option<DataPayload<M>>,
     }
