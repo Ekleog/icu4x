@@ -128,10 +128,7 @@ mod response {
     use core::marker::PhantomData;
     use core::ops::Deref;
     #[derive(Debug, Clone, PartialEq, Default)]
-    pub struct DataResponseMetadata {
-        pub locale: Option<DataLocale>,
-        buffer_format: Option<crate::buf::BufferFormat>,
-    }
+    pub struct DataResponseMetadata;
     pub struct DataPayload<M>
     where
         M: DataMarker,
