@@ -71,9 +71,7 @@ mod dynutil {
         M: crate::DataMarker,
         Self: Sized + crate::DataMarker,
     {
-        fn upcast(other: crate::DataPayload<M>) -> crate::DataPayload<Self> {
-            loop {}
-        }
+        fn upcast(other: crate::DataPayload<M>) -> crate::DataPayload<Self> {loop{}}
     }
 }
 mod error {
@@ -104,7 +102,6 @@ mod error {
 mod key {
     use core::ops::Deref;
     use writeable::{LengthHint, };
-    use zerovec::ule::*;
     struct DataKeyHash([u8; 4]);
     enum FallbackPriority {
         Language,
@@ -119,20 +116,10 @@ mod key {
     struct DataKeyPath {
         tagged: &'static str,
     }
-    impl DataKeyPath {
-        const fn get(self) -> &'static str {
-            loop {}
-        }
-    }
     struct DataKeyMetadata {
         fallback_priority: FallbackPriority,
         extension_key: Option<icu_locid::extensions::unicode::Key>,
         fallback_supplement: Option<FallbackSupplement>,
-    }
-    impl Default for DataKeyMetadata {
-        fn default() -> Self {
-            loop {}
-        }
     }
     pub struct DataKey {
         path: DataKeyPath,
@@ -156,9 +143,7 @@ mod request {
         keywords: unicode_ext::Keywords,
     }
     impl fmt::Debug for DataLocale {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            loop {}
-        }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {loop{}}
     }
 }
 mod response {
@@ -181,20 +166,15 @@ mod response {
     {
         _foo: PhantomData<M>,
     }
-    struct Cart(SelectedRc<Box<[u8]>>);
     impl<M> DataPayload<M>
     where
         M: DataMarker,
     {
-        pub fn try_unwrap_owned(self) -> Result<M::Yokeable, DataError> {
-            loop {}
-        }
+        pub fn try_unwrap_owned(self) -> Result<M::Yokeable, DataError> {loop{}}
         fn try_map_project<M2, F, E>(self, f: impl Sized) -> Result<DataPayload<M2>, E>
         where
             M2: DataMarker,
-        {
-            loop {}
-        }
+        {loop{}}
     }
     pub struct DataResponse<M>
     where
