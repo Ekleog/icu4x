@@ -121,11 +121,7 @@ mod key {
         extension_key: Option<icu_locid::extensions::unicode::Key>,
         fallback_supplement: Option<FallbackSupplement>,
     }
-    pub struct DataKey {
-        path: DataKeyPath,
-        hash: DataKeyHash,
-        metadata: DataKeyMetadata,
-    }
+    pub struct DataKey;
 }
 mod marker {
     use yoke::Yokeable;
