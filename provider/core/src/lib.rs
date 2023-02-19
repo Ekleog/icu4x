@@ -20,11 +20,6 @@ pub struct DataError {
 }
 pub struct DataResponseMetadata;
 pub struct DataPayload;
-impl DataPayload {
-    pub fn try_unwrap_owned(self) -> Result<AnyPayload, DataError> {
-        loop {}
-    }
-}
 pub struct DataResponse {
     pub payload: Option<DataPayload>,
 }
