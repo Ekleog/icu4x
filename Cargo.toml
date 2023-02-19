@@ -5,7 +5,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "components/calendar",
+    "calendar",
 ]
 [profile.release]
 lto = true
