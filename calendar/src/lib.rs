@@ -13,7 +13,7 @@ enum DataErrorKind {
 }
 enum Enum {
     A,
-    B(()),
+    B,
 }
 struct DataError {
     kind: DataErrorKind,
