@@ -15,4 +15,3 @@ pub struct DataError {
     kind: DataErrorKind,
     key: Option<()>,
 }
-pub use icu_provider::yoke;
