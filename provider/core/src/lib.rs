@@ -4,7 +4,7 @@ struct AnyResponse {
     payload: Option<AnyPayload>,
 }
 impl AnyResponse {
-    fn try_from(other: Option<DataPayload>) -> Result<Self, DataError> {
+    fn try_from(other: Option<()>) -> Result<Self, DataError> {
         other.map(|p| -> Result<AnyPayload, DataError> { loop {} }).transpose();
         loop {}
     }
@@ -20,7 +20,4 @@ pub struct DataError {
 }
 pub struct DataResponseMetadata;
 pub struct DataPayload;
-pub struct DataResponse {
-    pub payload: Option<DataPayload>,
-}
 pub use yoke;
