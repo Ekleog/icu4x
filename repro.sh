@@ -10,6 +10,7 @@ exec /home/ekleog/.rustup/toolchains/stage1/bin/rustc \
     -C opt-level=1 \
     --out-dir ./target \
     -C debuginfo=1 \
+    -C codegen-units=2 \
     -Clink-dead-code \
     -Cpasses=sancov-module \
     -Cllvm-args=-sanitizer-coverage-inline-8bit-counters \
