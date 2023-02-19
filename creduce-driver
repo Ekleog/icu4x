@@ -1,2 +1,0 @@
-#!/bin/sh
-(RUSTFLAGS="-A warnings" nix-shell /home/ekleog/prog/icu4x/shell.nix --run "cargo +stage1 bolero test -p icu_calendar foo" 2>&1 || true) | grep -q 'dereferencing end'
