@@ -6,33 +6,4 @@
 name = "icu_calendar"
 description = "API for supporting various types of calendars"
 version = "1.1.0"
-authors = ["The ICU4X Project Developers"]
 edition = "2021"
-readme = "README.md"
-repository = "https://github.com/unicode-org/icu4x"
-license = "Unicode-DFS-2016"
-categories = ["internationalization"]
-# Keep this in sync with other crates unless there are exceptions
-include = [
-    "src/**/*",
-    "examples/**/*",
-    "benches/**/*",
-    "tests/**/*",
-    "Cargo.toml",
-    "LICENSE",
-    "README.md"
-]
-
-[package.metadata.docs.rs]
-all-features = true
-
-[dependencies]
-
-[features]
-std = []
-serde = []
-datagen = []
-
-[package.metadata.cargo-all-features]
-# Bench feature gets tested separately and is only relevant for CI
-denylist = ["bench"]
