@@ -9,7 +9,3 @@ members = [
 ]
 [profile.release]
 lto = true
-
-[profile.release-opt-size]
-inherits = "release"
-opt-level = "s"
