@@ -1,7 +1,9 @@
 fn try_from(other: Option<()>) -> Result<(), DataError> {
-    other
-        .map(|p| -> Result<(), DataError> { loop {} })
-        .transpose();
+    let o: Option<Result<(), DataError>> = match other {
+        Some(o) => loop {},
+        None => None,
+    };
+    o.transpose();
     loop {}
 }
 enum DataErrorKind {
