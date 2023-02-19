@@ -36,9 +36,6 @@ mod error {
         key: Option<()>,
     }
 }
-mod key {
-    pub struct DataKey;
-}
 mod response {
     use crate::error::{DataError, };
     pub struct DataResponseMetadata;
@@ -53,7 +50,6 @@ mod response {
 }
 mod prelude {
     pub use crate::error::DataError;
-    pub use crate::key::DataKey;
     pub use crate::response::DataResponse;
     pub use crate::response::DataResponseMetadata;
     pub use yoke;
