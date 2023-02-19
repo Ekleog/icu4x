@@ -8,8 +8,8 @@ struct Error {
 }
 enum Input {
     A,
-    SomeOk,
-    SomeErr(Error),
+    B,
+    C(Error),
 }
 enum Opt2 {
     None,
@@ -22,7 +22,7 @@ enum Res2 {
 fn foo(other: Input) -> Res2 {
     match other {
         Input::A => Res2::Ok(Opt2::None),
-        Input::SomeOk => Res2::Ok(Opt2::Some),
-        Input::SomeErr(foo) => Res2::Err(foo),
+        Input::B => Res2::Ok(Opt2::Some),
+        Input::C(foo) => Res2::Err(foo),
     }
 }
