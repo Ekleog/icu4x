@@ -1,7 +1,6 @@
 mod any {
     use crate::prelude::*;
     pub struct AnyPayload;
-    struct AnyMarker;
     struct AnyResponse {
         metadata: DataResponseMetadata,
         payload: Option<AnyPayload>,
@@ -43,7 +42,6 @@ mod key {
 }
 mod response {
     use crate::error::{DataError, };
-    use core::marker::PhantomData;
     pub struct DataResponseMetadata;
     pub struct DataPayload;
     impl DataPayload {
