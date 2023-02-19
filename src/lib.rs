@@ -12,5 +12,9 @@ struct Error {
     bar: Enum2,
 }
 fn foo(other: Option<Result<(), Error>>) -> Result<Option<()>, Error> {
-    other.transpose()
+    match other {
+        Some(Ok(foo)) => Ok(Some(foo)),
+        Some(Err(foo)) => Err(foo),
+        None => Ok(None),
+    }
 }
