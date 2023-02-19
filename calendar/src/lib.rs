@@ -11,7 +11,11 @@ enum DataErrorKind {
     MismatchedType(&'static [()]),
     Io(u8),
 }
+enum Enum {
+    A,
+    B(()),
+}
 struct DataError {
     kind: DataErrorKind,
-    key: Option<()>,
+    key: Enum,
 }
