@@ -11,18 +11,14 @@ enum Input {
     B,
     C(Error),
 }
-enum Opt2 {
-    None,
-    Some,
-}
 enum Res2 {
-    Ok(Opt2),
+    Ok(Enum),
     Err(Error),
 }
 fn foo(other: Input) -> Res2 {
     match other {
-        Input::A => Res2::Ok(Opt2::None),
-        Input::B => Res2::Ok(Opt2::Some),
+        Input::A => Res2::Ok(Enum::A),
+        Input::B => Res2::Ok(Enum::A),
         Input::C(foo) => Res2::Err(foo),
     }
 }
