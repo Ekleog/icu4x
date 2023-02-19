@@ -6,16 +6,16 @@ fn try_from(other: Option<()>) -> Result<(), Error> {
     o.transpose();
     loop {}
 }
-enum DataErrorKind {
-    MissingDataKey,
+enum Enum1 {
+    MissigDataKey,
     MismatchedType(&'static [()]),
     Io(u8),
 }
-enum Enum {
+enum Enum2 {
     A,
     B,
 }
 struct Error {
-    foo: DataErrorKind,
-    bar: Enum,
+    foo: Enum1,
+    bar: Enum2,
 }
