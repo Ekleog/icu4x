@@ -34,7 +34,6 @@ mod error {
     pub struct DataError {
         kind: DataErrorKind,
         key: Option<DataKey>,
-        str_context: Option<&'static str>,
     }
 }
 mod key {
