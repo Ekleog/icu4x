@@ -3,7 +3,7 @@ rm -rf target
 exec /home/ekleog/.rustup/toolchains/stage1/bin/rustc \
     src/lib.rs \
     --emit=link \
-    -C opt-level=2 \
+    -C opt-level=1 \
     --out-dir ./target \
     -C debuginfo=1 \
     -Clink-dead-code \
