@@ -33,7 +33,7 @@ mod error {
     }
     pub struct DataError {
         kind: DataErrorKind,
-        key: Option<DataKey>,
+        key: Option<()>,
     }
 }
 mod key {
