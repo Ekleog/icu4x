@@ -11,7 +11,6 @@ struct Error {
     foo: Enum1,
     bar: Enum2,
 }
-fn foo(other: Option<Result<(), Error>>) -> Result<(), Error> {
-    other.transpose();
-    loop {}
+fn foo(other: Option<Result<(), Error>>) -> Result<Option<()>, Error> {
+    other.transpose()
 }
