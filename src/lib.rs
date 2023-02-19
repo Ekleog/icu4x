@@ -1,7 +1,6 @@
 enum Enum1 {
     A,
     B(&'static [()]),
-    C(u8),
 }
 enum Enum2 {
     A,
