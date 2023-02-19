@@ -17,7 +17,7 @@ mod error {
     use crate::prelude::*;
      enum DataErrorKind {
         MissingDataKey,
-        MismatchedType(&'static str),
+        MismatchedType(&'static [()]),
         Io(u8),
     }
     pub struct DataError {
