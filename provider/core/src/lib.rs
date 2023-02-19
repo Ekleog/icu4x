@@ -5,9 +5,8 @@ struct AnyResponse {
 }
 impl AnyResponse {
     fn try_from(other: DataResponse) -> Result<Self, DataError> {
-        Ok(Self {
-            payload: other.payload.map(|p| p.try_unwrap_owned()).transpose()?,
-        })
+        other.payload.map(|p| p.try_unwrap_owned()).transpose()?;
+        loop {}
     }
 }
 enum DataErrorKind {
