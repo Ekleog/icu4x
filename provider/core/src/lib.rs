@@ -22,12 +22,7 @@ mod error {
         ExtraneousLocale,
         FilteredResource,
         MismatchedType(&'static str),
-        MissingPayload,
-        InvalidState,
-        Custom,
         Io(std::io::ErrorKind),
-        MissingSourceData,
-        UnavailableBufferFormat,
     }
     pub struct DataError {
         kind: DataErrorKind,
