@@ -1,5 +1,4 @@
 enum Enum1 {
-    A,
     B(&'static ()),
 }
 enum Enum2 {
