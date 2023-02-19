@@ -6,10 +6,18 @@ struct Error {
     foo: &'static (),
     bar: Enum,
 }
-fn foo(other: Option<Result<(), Error>>) -> Result<Option<()>, Error> {
+enum Opt1 {
+    None,
+    Some(Res1),
+}
+enum Res1 {
+    Ok(()),
+    Err(Error),
+}
+fn foo(other: Opt1) -> Result<Option<()>, Error> {
     match other {
-        Some(Ok(foo)) => Ok(Some(foo)),
-        Some(Err(foo)) => Err(foo),
-        None => Ok(None),
+        Opt1::Some(Res1::Ok(foo)) => Ok(Some(foo)),
+        Opt1::Some(Res1::Err(foo)) => Err(foo),
+        Opt1::None => Ok(None),
     }
 }
