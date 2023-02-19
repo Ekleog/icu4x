@@ -2,14 +2,12 @@ mod any {
     use crate::prelude::*;
     pub struct AnyPayload;
     struct AnyResponse {
-        metadata: DataResponseMetadata,
         payload: Option<AnyPayload>,
     }
     impl TryFrom<DataResponse> for AnyResponse {
         type Error = DataError;
         fn try_from(other: DataResponse) -> Result<Self, Self::Error> {
             Ok(Self {
-                metadata: other.metadata,
                 payload: other.payload.map(|p| p.try_unwrap_owned()).transpose()?,
             })
         }
@@ -44,7 +42,6 @@ mod response {
         pub fn try_unwrap_owned(self) -> Result<crate::any::AnyPayload, DataError> {loop{}}
     }
     pub struct DataResponse {
-        pub metadata: DataResponseMetadata,
         pub payload: Option<DataPayload>,
     }
 }
