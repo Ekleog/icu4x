@@ -6,7 +6,7 @@ struct Error {
     foo: &'static (),
     bar: Enum,
 }
-enum Opt1 {
+enum Input {
     None,
     SomeOk,
     SomeErr(Error),
@@ -19,10 +19,10 @@ enum Res2 {
     Ok(Opt2),
     Err(Error),
 }
-fn foo(other: Opt1) -> Res2 {
+fn foo(other: Input) -> Res2 {
     match other {
-        Opt1::SomeOk => Res2::Ok(Opt2::Some),
-        Opt1::SomeErr(foo) => Res2::Err(foo),
-        Opt1::None => Res2::Ok(Opt2::None),
+        Input::SomeOk => Res2::Ok(Opt2::Some),
+        Input::SomeErr(foo) => Res2::Err(foo),
+        Input::None => Res2::Ok(Opt2::None),
     }
 }
