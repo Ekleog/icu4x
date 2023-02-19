@@ -14,10 +14,18 @@ enum Res1 {
     Ok,
     Err(Error),
 }
-fn foo(other: Opt1) -> Result<Option<()>, Error> {
+enum Opt2 {
+    None,
+    Some(()),
+}
+enum Res2 {
+    Ok(Opt2),
+    Err(Error),
+}
+fn foo(other: Opt1) -> Res2 {
     match other {
-        Opt1::Some(Res1::Ok) => Ok(Some(())),
-        Opt1::Some(Res1::Err(foo)) => Err(foo),
-        Opt1::None => Ok(None),
+        Opt1::Some(Res1::Ok) => Res2::Ok(Opt2::Some(())),
+        Opt1::Some(Res1::Err(foo)) => Res2::Err(foo),
+        Opt1::None => Res2::Ok(Opt2::None),
     }
 }
