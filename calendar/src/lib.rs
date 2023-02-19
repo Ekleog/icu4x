@@ -1,6 +1,6 @@
 fn try_from(other: Option<()>) -> Result<(), Error> {
     let o: Option<Result<(), Error>> = match other {
-        Some(o) => loop {},
+        Some(_) => loop {},
         None => None,
     };
     o.transpose();
