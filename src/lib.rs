@@ -1,21 +1,21 @@
-enum Enum {
+pub enum Enum {
     A,
     B,
 }
-struct Error {
-    foo: &'static (),
-    bar: Enum,
+pub struct Error {
+    _foo: &'static (),
+    _bar: Enum,
 }
-enum Input {
+pub enum Input {
     A,
     B,
     C(Error),
 }
-enum Output {
+pub enum Output {
     Ok(Enum),
     Err(Error),
 }
-fn foo(other: Input) -> Output {
+pub fn foo(other: Input) -> Output {
     match other {
         Input::A => Output::Ok(Enum::A),
         Input::B => Output::Ok(Enum::A),
