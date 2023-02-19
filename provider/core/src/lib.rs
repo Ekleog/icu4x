@@ -3,9 +3,8 @@ pub struct AnyPayload;
 struct AnyResponse {
     payload: Option<AnyPayload>,
 }
-impl TryFrom<DataResponse> for AnyResponse {
-    type Error = DataError;
-    fn try_from(other: DataResponse) -> Result<Self, Self::Error> {
+impl AnyResponse {
+    fn try_from(other: DataResponse) -> Result<Self, DataError> {
         Ok(Self {
             payload: other.payload.map(|p| p.try_unwrap_owned()).transpose()?,
         })
