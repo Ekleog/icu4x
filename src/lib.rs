@@ -6,7 +6,7 @@ enum Enum2 {
     B,
 }
 struct Error {
-    foo: Enum1,
+    foo: &'static (),
     bar: Enum2,
 }
 fn foo(other: Option<Result<(), Error>>) -> Result<Option<()>, Error> {
