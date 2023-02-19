@@ -18,7 +18,7 @@ mod error {
      enum DataErrorKind {
         MissingDataKey,
         MismatchedType(&'static str),
-        Io(std::io::ErrorKind),
+        Io(u8),
     }
     pub struct DataError {
         kind: DataErrorKind,
