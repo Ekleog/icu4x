@@ -4,8 +4,8 @@ struct AnyResponse {
     payload: Option<AnyPayload>,
 }
 impl AnyResponse {
-    fn try_from(other: DataResponse) -> Result<Self, DataError> {
-        other.payload.map(|p| -> Result<AnyPayload, DataError> { loop {} }).transpose();
+    fn try_from(other: Option<DataPayload>) -> Result<Self, DataError> {
+        other.map(|p| -> Result<AnyPayload, DataError> { loop {} }).transpose();
         loop {}
     }
 }
