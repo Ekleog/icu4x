@@ -1,4 +1,4 @@
-fn try_from(other: Option<()>) -> Result<(), Error> {
+fn foo(other: Option<()>) -> Result<(), Error> {
     let o: Option<Result<(), Error>> = match other {
         Some(_) => loop {},
         None => None,
