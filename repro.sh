@@ -2,6 +2,7 @@
 rm -rf target
 # works: type=llvm-ir
 # works: type=asm
+# works: type=obj
 type=link
 exec /home/ekleog/.rustup/toolchains/stage1/bin/rustc \
     src/main.rs \
