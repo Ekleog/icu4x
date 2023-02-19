@@ -7,9 +7,9 @@ fn try_from(other: Option<()>) -> Result<(), Error> {
     loop {}
 }
 enum Enum1 {
-    MissigDataKey,
-    MismatchedType(&'static [()]),
-    Io(u8),
+    A,
+    B(&'static [()]),
+    C(u8),
 }
 enum Enum2 {
     A,
