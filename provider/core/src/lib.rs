@@ -1,8 +1,6 @@
-pub struct AnyPayload;
-struct AnyResponse;
-fn try_from(other: Option<()>) -> Result<AnyResponse, DataError> {
+fn try_from(other: Option<()>) -> Result<(), DataError> {
     other
-        .map(|p| -> Result<AnyPayload, DataError> { loop {} })
+        .map(|p| -> Result<(), DataError> { loop {} })
         .transpose();
     loop {}
 }
