@@ -17,4 +17,5 @@ exec /home/ekleog/.rustup/toolchains/stage1/bin/rustc \
     -Cllvm-args=-sanitizer-coverage-level=3 \
     -Cllvm-args=-sanitizer-coverage-pc-table \
     -Zsanitizer=address \
-    -Z no-parallel-llvm
+    -Z no-parallel-llvm \
+    -C save-temps
