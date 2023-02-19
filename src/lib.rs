@@ -11,14 +11,14 @@ enum Input {
     B,
     C(Error),
 }
-enum Res2 {
+enum Output {
     Ok(Enum),
     Err(Error),
 }
-fn foo(other: Input) -> Res2 {
+fn foo(other: Input) -> Output {
     match other {
-        Input::A => Res2::Ok(Enum::A),
-        Input::B => Res2::Ok(Enum::A),
-        Input::C(foo) => Res2::Err(foo),
+        Input::A => Output::Ok(Enum::A),
+        Input::B => Output::Ok(Enum::A),
+        Input::C(foo) => Output::Err(foo),
     }
 }
