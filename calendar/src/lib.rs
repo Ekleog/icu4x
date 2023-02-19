@@ -1,11 +1,3 @@
-fn foo(other: Option<()>) -> Result<(), Error> {
-    let o: Option<Result<(), Error>> = match other {
-        Some(_) => loop {},
-        None => None,
-    };
-    o.transpose();
-    loop {}
-}
 enum Enum1 {
     A,
     B(&'static [()]),
@@ -18,4 +10,12 @@ enum Enum2 {
 struct Error {
     foo: Enum1,
     bar: Enum2,
+}
+fn foo(other: Option<()>) -> Result<(), Error> {
+    let o: Option<Result<(), Error>> = match other {
+        Some(_) => loop {},
+        None => None,
+    };
+    o.transpose();
+    loop {}
 }
