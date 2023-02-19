@@ -22,3 +22,5 @@ pub fn foo(other: Input) -> Output {
         Input::C(foo) => Output::Err(foo),
     }
 }
+
+fn main() {}
