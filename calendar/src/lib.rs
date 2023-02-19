@@ -1,5 +1,5 @@
-fn try_from(other: Option<()>) -> Result<(), DataError> {
-    let o: Option<Result<(), DataError>> = match other {
+fn try_from(other: Option<()>) -> Result<(), Error> {
+    let o: Option<Result<(), Error>> = match other {
         Some(o) => loop {},
         None => None,
     };
@@ -15,7 +15,7 @@ enum Enum {
     A,
     B,
 }
-struct DataError {
-    kind: DataErrorKind,
-    key: Enum,
+struct Error {
+    foo: DataErrorKind,
+    bar: Enum,
 }
