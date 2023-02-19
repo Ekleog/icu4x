@@ -1,8 +1,11 @@
 #!/bin/sh
 rm -rf target
+# works: type=llvm-ir
+# works: type=asm
+type=link
 exec /home/ekleog/.rustup/toolchains/stage1/bin/rustc \
     src/main.rs \
-    --emit=link \
+    --emit=$type \
     -C opt-level=1 \
     --out-dir ./target \
     -C debuginfo=1 \
