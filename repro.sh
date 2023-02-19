@@ -10,4 +10,5 @@ exec /home/ekleog/.rustup/toolchains/stage1/bin/rustc \
     -Cpasses=sancov-module \
     -Cllvm-args=-sanitizer-coverage-inline-8bit-counters \
     -Cllvm-args=-sanitizer-coverage-level=3 \
-    -Cllvm-args=-sanitizer-coverage-pc-table -Zsanitizer=address
+    -Cllvm-args=-sanitizer-coverage-pc-table \
+    -Zsanitizer=address
