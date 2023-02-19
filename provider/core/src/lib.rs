@@ -17,10 +17,6 @@ mod error {
     use crate::prelude::*;
      enum DataErrorKind {
         MissingDataKey,
-        MissingLocale,
-        NeedsLocale,
-        ExtraneousLocale,
-        FilteredResource,
         MismatchedType(&'static str),
         Io(std::io::ErrorKind),
     }
