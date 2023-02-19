@@ -1,2 +1,0 @@
-#!/bin/sh
-RUSTFLAGS="-A warnings" cargo +stage1 bolero test -p icu_calendar foo
