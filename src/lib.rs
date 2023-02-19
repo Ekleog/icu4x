@@ -11,10 +11,6 @@ enum Opt1 {
     SomeOk,
     SomeErr(Error),
 }
-enum Res1 {
-    Ok,
-    Err(Error),
-}
 enum Opt2 {
     None,
     Some,
