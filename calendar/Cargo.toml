@@ -36,21 +36,3 @@ datagen = []
 [package.metadata.cargo-all-features]
 # Bench feature gets tested separately and is only relevant for CI
 denylist = ["bench"]
-
-[[bench]]
-name = "date"
-harness = false
-
-[[bench]]
-name = "datetime"
-harness = false
-
-[[bench]]
-name = "iso"
-harness = false
-
-[[example]]
-name = "iso_date_manipulations"
-
-[[example]]
-name = "iso_datetime_manipulations"
